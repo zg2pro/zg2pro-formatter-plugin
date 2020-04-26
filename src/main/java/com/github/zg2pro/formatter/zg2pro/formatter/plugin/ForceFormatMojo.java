@@ -113,34 +113,6 @@ public class ForceFormatMojo extends AbstractMojo {
         getLog().info("executes editorconfig");
 
         try {
-            //configuration to merge with in Xpp3dom:
-//        <configuration>
-//  <addLintersFromClassPath default-value="true" implementation="boolean">${editorconfig.addLintersFromClassPath}</addLintersFromClassPath>
-//  <backup default-value="false" implementation="boolean">${editorconfig.backup}</backup>
-//  <backupSuffix default-value=".bak" implementation="java.lang.String">${editorconfig.backupSuffix}</backupSuffix>
-//  <basedir default-value="${project.basedir}" implementation="java.io.File"/>
-//  <encoding default-value="${project.build.sourceEncoding}" implementation="java.lang.String">${editorconfig.encoding}</encoding>
-//  <excludeNonSourceFiles default-value="true" implementation="boolean">${editorconfig.excludeNonSourceFiles}</excludeNonSourceFiles>
-//  <excludeSubmodules default-value="true" implementation="boolean">${editorconfig.excludeSubmodules}</excludeSubmodules>
-//  <excludes implementation="java.lang.String[]">${editorconfig.excludes}</excludes>
-//  <failOnNoMatchingProperties default-value="true" implementation="boolean">${editorconfig.failOnNoMatchingProperties}</failOnNoMatchingProperties>
-//  <includes default-value="**" implementation="java.lang.String[]">${editorconfig.includes}</includes>
-//  <skip default-value="false" implementation="boolean">${editorconfig.skip}</skip>
-//</configuration>
-//        executeMojo(
-//                plugin(
-//                        groupId("org.ec4j.maven"),
-//                        artifactId("editorconfig-maven-plugin"),
-//                        version("0.0.11")
-//                ),
-//                goal("format"),
-//                configuration(
-//                     //   element(name("excludes"), ".git/**,**/target/**,**/dist/**,**/node_modules/**,**/node/**,**/package-lock.json")
-//                    //    element(name("includes"), "**/*.java,**/*.js,**/*.json,**/*.ts,**/*.yml,**/*.properties,**.*.xml,**.*.vue")
-//                        element(name("includes"), "**")
-//                ),
-//                executionEnvironment(project, session, pluginManager)
-//        );
             File projectBaseDir = new File(rootDirectory);
             Path currentModulePath = project.getFile().getParentFile().toPath();
             String relativePathToModule = currentModulePath.toFile().getAbsolutePath()
@@ -160,12 +132,13 @@ public class ForceFormatMojo extends AbstractMojo {
                     .cache(Caches.permanent()) //
                     .build();
             handler.startFiles();
+            getLog().debug("relative path to module:|" + relativePathToModule + "|");
             while (treeWalk.next()) {
                 String file = treeWalk.getPathString();
+                getLog().debug(file); //relative paths to basedir
 //at root module this should be empty string
                 if (file.startsWith(relativePathToModule)) {
                     boolean inSubmodule = false;
-                    getLog().debug(file); //relative paths to basedir
                     if ("pom".equals(project.getPackaging())) {
                         List<String> subModulesNames = project.getModules();
                         for (String subM : subModulesNames) {
