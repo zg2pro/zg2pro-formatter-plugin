@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"com.github.zg2pro.formatter.zg2pro.formatter.plugin"}]
