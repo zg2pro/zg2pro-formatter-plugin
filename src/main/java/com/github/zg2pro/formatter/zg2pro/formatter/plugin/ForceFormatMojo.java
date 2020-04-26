@@ -86,6 +86,21 @@ public class ForceFormatMojo extends AbstractMojo {
         );
 
         getLog().info("executes editorconfig");
+
+        //configuration to merge with in Xpp3dom:
+//        <configuration>
+//  <addLintersFromClassPath default-value="true" implementation="boolean">${editorconfig.addLintersFromClassPath}</addLintersFromClassPath>
+//  <backup default-value="false" implementation="boolean">${editorconfig.backup}</backup>
+//  <backupSuffix default-value=".bak" implementation="java.lang.String">${editorconfig.backupSuffix}</backupSuffix>
+//  <basedir default-value="${project.basedir}" implementation="java.io.File"/>
+//  <encoding default-value="${project.build.sourceEncoding}" implementation="java.lang.String">${editorconfig.encoding}</encoding>
+//  <excludeNonSourceFiles default-value="true" implementation="boolean">${editorconfig.excludeNonSourceFiles}</excludeNonSourceFiles>
+//  <excludeSubmodules default-value="true" implementation="boolean">${editorconfig.excludeSubmodules}</excludeSubmodules>
+//  <excludes implementation="java.lang.String[]">${editorconfig.excludes}</excludes>
+//  <failOnNoMatchingProperties default-value="true" implementation="boolean">${editorconfig.failOnNoMatchingProperties}</failOnNoMatchingProperties>
+//  <includes default-value="**" implementation="java.lang.String[]">${editorconfig.includes}</includes>
+//  <skip default-value="false" implementation="boolean">${editorconfig.skip}</skip>
+//</configuration>
         executeMojo(
                 plugin(
                         groupId("org.ec4j.maven"),
@@ -94,23 +109,8 @@ public class ForceFormatMojo extends AbstractMojo {
                 ),
                 goal("format"),
                 configuration(
-                        element(
-                                name("excludes"),
-                                element("exclude", ".git/**"),
-                                element("exclude", "**/dist/**"),
-                                element("exclude", "**/node_modules/**"),
-                                element("exclude", "**/package-lock.json")
-                        ),
-                        element(
-                                name("includes"),
-                                element("include", "**/*.java"),
-                                element("include", "**/*.js"),
-                                element("include", "**/*.json"),
-                                element("include", "**/*.yml"),
-                                element("include", "**/*.properties"),
-                                element("include", "**/*.vue"),
-                                element("include", "**/*.xml")
-                        )
+                        element(name("excludes"), ".git/**,**/target/**,**/dist/**,**/node_modules/**,**/node/**,**/package-lock.json"),
+                        element(name("includes"), "**/*.java,**/*.js,**/*.json,**/*.ts,**/*.yml,**/*.properties,**.*.xml,**.*.vue")
                 ),
                 executionEnvironment(project, session, pluginManager)
         );
