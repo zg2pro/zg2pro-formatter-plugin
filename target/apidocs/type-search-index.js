@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"com.github.zg2pro.formatter.zg2pro.formatter.plugin","l":"ForceFormatMojo"}]
