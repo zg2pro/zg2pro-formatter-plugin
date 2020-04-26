@@ -109,8 +109,9 @@ public class ForceFormatMojo extends AbstractMojo {
                 ),
                 goal("format"),
                 configuration(
-                        element(name("excludes"), ".git/**,**/target/**,**/dist/**,**/node_modules/**,**/node/**,**/package-lock.json"),
-                        element(name("includes"), "**/*.java,**/*.js,**/*.json,**/*.ts,**/*.yml,**/*.properties,**.*.xml,**.*.vue")
+                     //   element(name("excludes"), ".git/**,**/target/**,**/dist/**,**/node_modules/**,**/node/**,**/package-lock.json")
+                    //    element(name("includes"), "**/*.java,**/*.js,**/*.json,**/*.ts,**/*.yml,**/*.properties,**.*.xml,**.*.vue")
+                        element(name("includes"), "**")
                 ),
                 executionEnvironment(project, session, pluginManager)
         );
