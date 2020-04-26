@@ -11,6 +11,7 @@
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <version.org.ec4j.linters>0.1.2</version.org.ec4j.linters>
     </properties>
     <url>https://github.com/zg2pro/zg2pro-formatter-plugin</url>
 
@@ -48,6 +49,7 @@
     </build>
     
     <dependencies>
+        
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
@@ -76,13 +78,25 @@
             <artifactId>mojo-executor</artifactId>
             <version>2.3.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>5.7.0.202003110725-r</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ec4j.linters</groupId>
+            <artifactId>editorconfig-lint-api</artifactId>
+            <version>${version.org.ec4j.linters}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ec4j.linters</groupId>
+            <artifactId>editorconfig-linters</artifactId>
+            <version>${version.org.ec4j.linters}</version>
+        </dependency>
     </dependencies>
 
     <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <url>http://repo.spring.io/milestone/</url>
-        </repository>
         <repository>
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2/</url>

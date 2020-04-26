@@ -6,7 +6,12 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
@@ -19,6 +24,26 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.ec4j.core.Cache.Caches;
+import org.ec4j.lint.api.Resource;
+import org.ec4j.core.Resource.Charsets;
+import org.ec4j.core.Resource.Resources;
+import org.ec4j.core.ResourceProperties;
+import org.ec4j.core.ResourcePropertiesService;
+import org.ec4j.core.model.PropertyType;
+import org.ec4j.lint.api.FormattingHandler;
+import org.ec4j.lint.api.Linter;
+import org.ec4j.lint.api.ViolationHandler;
+import org.ec4j.linters.TextLinter;
+import org.ec4j.linters.XmlLinter;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.slf4j.LoggerFactory;
 
 @Mojo(defaultPhase = LifecyclePhase.VALIDATE, name = "apply", threadSafe = true)
 public class ForceFormatMojo extends AbstractMojo {
@@ -87,7 +112,8 @@ public class ForceFormatMojo extends AbstractMojo {
 
         getLog().info("executes editorconfig");
 
-        //configuration to merge with in Xpp3dom:
+        try {
+            //configuration to merge with in Xpp3dom:
 //        <configuration>
 //  <addLintersFromClassPath default-value="true" implementation="boolean">${editorconfig.addLintersFromClassPath}</addLintersFromClassPath>
 //  <backup default-value="false" implementation="boolean">${editorconfig.backup}</backup>
@@ -101,21 +127,89 @@ public class ForceFormatMojo extends AbstractMojo {
 //  <includes default-value="**" implementation="java.lang.String[]">${editorconfig.includes}</includes>
 //  <skip default-value="false" implementation="boolean">${editorconfig.skip}</skip>
 //</configuration>
-        executeMojo(
-                plugin(
-                        groupId("org.ec4j.maven"),
-                        artifactId("editorconfig-maven-plugin"),
-                        version("0.0.11")
-                ),
-                goal("format"),
-                configuration(
-                     //   element(name("excludes"), ".git/**,**/target/**,**/dist/**,**/node_modules/**,**/node/**,**/package-lock.json")
-                    //    element(name("includes"), "**/*.java,**/*.js,**/*.json,**/*.ts,**/*.yml,**/*.properties,**.*.xml,**.*.vue")
-                        element(name("includes"), "**")
-                ),
-                executionEnvironment(project, session, pluginManager)
-        );
+//        executeMojo(
+//                plugin(
+//                        groupId("org.ec4j.maven"),
+//                        artifactId("editorconfig-maven-plugin"),
+//                        version("0.0.11")
+//                ),
+//                goal("format"),
+//                configuration(
+//                     //   element(name("excludes"), ".git/**,**/target/**,**/dist/**,**/node_modules/**,**/node/**,**/package-lock.json")
+//                    //    element(name("includes"), "**/*.java,**/*.js,**/*.json,**/*.ts,**/*.yml,**/*.properties,**.*.xml,**.*.vue")
+//                        element(name("includes"), "**")
+//                ),
+//                executionEnvironment(project, session, pluginManager)
+//        );
+            File projectBaseDir = new File(rootDirectory);
+            Path currentModulePath = project.getFile().getParentFile().toPath();
+            String relativePathToModule = currentModulePath.toFile().getAbsolutePath()
+                    .replace(projectBaseDir.getAbsolutePath(), "");
+            Git git = Git.open(projectBaseDir);
+            Repository repo = git.getRepository();
+            Ref head = repo.findRef("HEAD");
+            RevWalk walk = new RevWalk(repo);
+            RevCommit commit = walk.parseCommit(head.getObjectId());
+            RevTree tree = commit.getTree();
+            TreeWalk treeWalk = new TreeWalk(repo);
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
+            final ViolationHandler handler = new FormattingHandler(false, ".bak",
+                    new LoggerWrapper(LoggerFactory.getLogger(FormattingHandler.class)));
+            final ResourcePropertiesService resourcePropertiesService = ResourcePropertiesService.builder() //
+                    .cache(Caches.permanent()) //
+                    .build();
+            handler.startFiles();
+            while (treeWalk.next()) {
+                String file = treeWalk.getPathString();
+//at root module this should be empty string
+                if (file.startsWith(relativePathToModule)) {
+                    boolean inSubmodule = false;
+                    getLog().debug(file); //relative paths to basedir
+                    if ("pom".equals(project.getPackaging())) {
+                        List<String> subModulesNames = project.getModules();
+                        for (String subM : subModulesNames) {
+                            if (file.startsWith(subM)) {
+                                inSubmodule = true;
+                                getLog().debug("in submodule:" + file);
+                            }
+                        }
+                    }
+                    if (!inSubmodule) {
+                        formatWithEditorconfig(file, projectBaseDir, resourcePropertiesService, handler);
+                    }
+                }
+            }
 
+        } catch (IOException ex) {
+            throw new MojoExecutionException(
+                    "could not open this folder with jgit",
+                    ex
+            );
+        }
+    }
+
+    private void formatWithEditorconfig(String file, File projectBaseDir, final ResourcePropertiesService resourcePropertiesService, final ViolationHandler handler) throws IOException {
+        final Path filePath = Paths.get(file); // relative to basedir
+        final Path absFile = projectBaseDir.toPath().resolve(filePath);
+        getLog().debug("Processing file '{}'" + filePath);
+        final ResourceProperties editorConfigProperties = resourcePropertiesService
+                .queryProperties(Resources.ofPath(absFile, StandardCharsets.UTF_8));
+        if (!editorConfigProperties.getProperties().isEmpty()) {
+            final Charset useEncoding = Charsets
+                    .forName(editorConfigProperties.getValue(PropertyType.charset, "UTF-8", true));
+            final Resource resource = new Resource(absFile, filePath, useEncoding);
+            final List<Linter> filteredLinters = Arrays.asList(new XmlLinter(), new TextLinter());
+            ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
+            while (state != ViolationHandler.ReturnState.FINISHED) {
+                for (Linter linter : filteredLinters) {
+                    getLog().debug("Processing file using linter " + linter.getClass().getName());
+                    handler.startFile(resource);
+                    linter.process(resource, editorConfigProperties, handler);
+                }
+                state = handler.endFile();
+            }
+        }
     }
 
     private void gitHookPluginExecution(String position)
@@ -158,4 +252,5 @@ public class ForceFormatMojo extends AbstractMojo {
             FileUtils.writeStringToFile(couldBeExistingFile, content, "UTF-8");
         }
     }
+
 }
