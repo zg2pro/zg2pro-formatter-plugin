@@ -4,12 +4,11 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 import com.google.common.io.Files;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -37,12 +36,7 @@ import org.ec4j.lint.api.ViolationHandler;
 import org.ec4j.linters.TextLinter;
 import org.ec4j.linters.XmlLinter;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.LoggerFactory;
 
 @Mojo(defaultPhase = LifecyclePhase.VALIDATE, name = "apply", threadSafe = true)
@@ -112,46 +106,36 @@ public class ForceFormatMojo extends AbstractMojo {
 
         getLog().info("executes editorconfig");
 
+        executeEditorConfigOnGitRepo(rootDirectory);
+    }
+
+    private void executeEditorConfigOnGitRepo(String rootDirectory)
+            throws MojoExecutionException {
         try {
             File projectBaseDir = new File(rootDirectory);
-            Path currentModulePath = project.getFile().getParentFile().toPath();
-            String relativePathToModule = currentModulePath.toFile().getAbsolutePath()
-                    .replace(projectBaseDir.getAbsolutePath(), "");
             Git git = Git.open(projectBaseDir);
             Repository repo = git.getRepository();
-            Ref head = repo.findRef("HEAD");
-            RevWalk walk = new RevWalk(repo);
-            RevCommit commit = walk.parseCommit(head.getObjectId());
-            RevTree tree = commit.getTree();
-            TreeWalk treeWalk = new TreeWalk(repo);
-            treeWalk.addTree(tree);
-            treeWalk.setRecursive(true);
+            IgnoreRules ir = new IgnoreRules(repo);
+
             final ViolationHandler handler = new FormattingHandler(false, ".bak",
                     new LoggerWrapper(LoggerFactory.getLogger(FormattingHandler.class)));
             final ResourcePropertiesService resourcePropertiesService = ResourcePropertiesService.builder() //
                     .cache(Caches.permanent()) //
                     .build();
+            final ResourceProperties editorConfigProperties = resourcePropertiesService
+                    .queryProperties(Resources.ofPath(projectBaseDir.toPath().resolve(".editorconfig"), StandardCharsets.UTF_8));
             handler.startFiles();
-            getLog().debug("relative path to module:|" + relativePathToModule + "|");
-            while (treeWalk.next()) {
-                String file = treeWalk.getPathString();
-                getLog().debug(file); //relative paths to basedir
-//at root module this should be empty string
-                if (file.startsWith(relativePathToModule)) {
-                    boolean inSubmodule = false;
-                    if ("pom".equals(project.getPackaging())) {
-                        List<String> subModulesNames = project.getModules();
-                        for (String subM : subModulesNames) {
-                            if (file.startsWith(subM)) {
-                                inSubmodule = true;
-                                getLog().debug("in submodule:" + file);
-                            }
-                        }
-                    }
-                    if (!inSubmodule) {
-                        formatWithEditorconfig(file, projectBaseDir, resourcePropertiesService, handler);
-                    }
+
+            File currentModuleFolder = project.getFile().getParentFile();
+            List<String> subModules = project.getModules();
+
+            for (File insideModule : currentModuleFolder.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return !subModules.contains(name);
                 }
+            })) {
+                handleFile(insideModule, ir, handler, editorConfigProperties);
             }
 
         } catch (IOException ex) {
@@ -162,25 +146,44 @@ public class ForceFormatMojo extends AbstractMojo {
         }
     }
 
-    private void formatWithEditorconfig(String file, File projectBaseDir, final ResourcePropertiesService resourcePropertiesService, final ViolationHandler handler) throws IOException {
-        final Path filePath = Paths.get(file); // relative to basedir
-        final Path absFile = projectBaseDir.toPath().resolve(filePath);
-        getLog().debug("Processing file '{}'" + filePath);
-        final ResourceProperties editorConfigProperties = resourcePropertiesService
-                .queryProperties(Resources.ofPath(absFile, StandardCharsets.UTF_8));
+    private boolean isBinaryFile(File f) throws IOException {
+        String type = java.nio.file.Files.probeContentType(f.toPath());
+        return type == null || !type.startsWith("text");
+    }
+    
+    private void handleFile(File f, IgnoreRules ir,
+            ViolationHandler handler,
+            ResourceProperties editorConfigProperties) throws IOException {
+        if (f.isDirectory()) {
+            for (File insideFolder : f.listFiles()) {
+                handleFile(insideFolder, ir, handler, editorConfigProperties);
+            }
+        } else {
+            if (!ir.isIgnored(f) && !isBinaryFile(f)) {
+                formatWithEditorconfig(f, handler, editorConfigProperties);
+            }
+        }
+    }
+
+    private void formatWithEditorconfig(File file,
+            ViolationHandler handler, ResourceProperties editorConfigProperties) throws IOException {
+        getLog().debug("Processing file '{}'" + file.getPath());
         if (!editorConfigProperties.getProperties().isEmpty()) {
             final Charset useEncoding = Charsets
                     .forName(editorConfigProperties.getValue(PropertyType.charset, "UTF-8", true));
-            final Resource resource = new Resource(absFile, filePath, useEncoding);
-            final List<Linter> filteredLinters = Arrays.asList(new XmlLinter(), new TextLinter());
-            ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
-            while (state != ViolationHandler.ReturnState.FINISHED) {
-                for (Linter linter : filteredLinters) {
-                    getLog().debug("Processing file using linter " + linter.getClass().getName());
-                    handler.startFile(resource);
-                    linter.process(resource, editorConfigProperties, handler);
+            final Resource resource = new Resource(file.toPath(), file.toPath(), useEncoding);
+            //the file can be in index but removed by the developer
+            if (resource.getPath().toFile().exists()) {
+                final List<Linter> filteredLinters = Arrays.asList(new XmlLinter(), new TextLinter());
+                ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
+                while (state != ViolationHandler.ReturnState.FINISHED) {
+                    for (Linter linter : filteredLinters) {
+                        getLog().debug("Processing file using linter " + linter.getClass().getName());
+                        handler.startFile(resource);
+                        linter.process(resource, editorConfigProperties, handler);
+                    }
+                    state = handler.endFile();
                 }
-                state = handler.endFile();
             }
         }
     }
@@ -211,6 +214,9 @@ public class ForceFormatMojo extends AbstractMojo {
         if (isWindows) {
             getLog().debug("windows recognized, checking end of lines in editorconfig");
             content = content.replace("end_of_line = lf", "end_of_line = crlf");
+        } else {
+            getLog().debug("linux recognized, checking end of lines in editorconfig");
+            content = content.replace("end_of_line = crlf", "end_of_line = lf");
         }
         File couldBeExistingFile = project
                 .getFile()
