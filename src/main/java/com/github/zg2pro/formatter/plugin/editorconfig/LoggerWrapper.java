@@ -1,4 +1,4 @@
-package com.github.zg2pro.formatter.plugin;
+package com.github.zg2pro.formatter.plugin.editorconfig;
 
 import org.ec4j.lint.api.Logger;
 

@@ -1,4 +1,4 @@
-package com.github.zg2pro.formatter.plugin;
+package com.github.zg2pro.formatter.plugin.editorconfig;
 
 /**
  * /*
@@ -74,7 +74,7 @@ public class IgnoreRules {
     }
 
     /**
-     * @param db
+     * @param db is the git repositry
      */
     public IgnoreRules(Repository db) {
         this.db = db;
@@ -86,8 +86,8 @@ public class IgnoreRules {
      *
      * @param toCheckFor which should be checked
      * @return <code>true</code> if the given path should be ignored
-     * @throws IOException
-     * @throws FileNotFoundException
+     * @throws IOException - when issues reading files
+     * @throws FileNotFoundException - when issues reading files
      */
     public boolean isIgnored(File toCheckFor)
             throws FileNotFoundException, IOException {
