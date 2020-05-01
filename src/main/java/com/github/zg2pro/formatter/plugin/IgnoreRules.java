@@ -1,4 +1,4 @@
-package com.github.zg2pro.formatter.zg2pro.formatter.plugin;
+package com.github.zg2pro.formatter.plugin;
 
 /**
  * /*
@@ -94,20 +94,14 @@ public class IgnoreRules {
         if (toCheckFor == null) {
             throw new IllegalArgumentException("file to check object is null!");
         }
+        boolean result = toCheckFor.getParentFile().equals(db.getWorkTree()) 
+                && toCheckFor.getName().equals(".git") 
+                || checkGitignoreFiles(toCheckFor);
 
-        // ignore /.git in any case
-        //X TODO evaluate GIT_DIR environment variable!
-        if (toCheckFor.getParentFile().equals(db.getWorkTree()) && toCheckFor.getName().equals(".git")) {
-            return true;
-        }
-
-        if (checkGitignoreFiles(toCheckFor)) {
-            return true;
-        }
-
+        getLog().debug("ignore in git: " + result);
         //X TODO check .git/info/excludes
         //X TODO check core.excludefiles
-        return false;
+        return result;
     }
 
     /**
@@ -124,10 +118,10 @@ public class IgnoreRules {
         if (!toCheckFor.getAbsolutePath().startsWith(db.getWorkTree().getAbsolutePath())) {
             throw new IllegalArgumentException("file must be inside the repositories working directory! " + toCheckFor.getAbsolutePath());
         }
-        if (toCheckFor.getAbsolutePath().contains("/.git/")){
+        if (toCheckFor.getAbsolutePath().contains("/.git/")) {
             return true;
         }
-        
+
         File repoDir = db.getWorkTree().getAbsoluteFile();
         File parseDir = toCheckFor;
         do {

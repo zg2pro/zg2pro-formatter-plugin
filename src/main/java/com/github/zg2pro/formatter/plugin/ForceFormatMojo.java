@@ -1,14 +1,14 @@
-package com.github.zg2pro.formatter.zg2pro.formatter.plugin;
+package com.github.zg2pro.formatter.plugin;
 
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
-import com.google.common.io.Files;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -147,10 +147,27 @@ public class ForceFormatMojo extends AbstractMojo {
     }
 
     private boolean isBinaryFile(File f) throws IOException {
-        String type = java.nio.file.Files.probeContentType(f.toPath());
-        return type == null || !type.startsWith("text");
+        String type = Files.probeContentType(f.toPath());
+        boolean binary = true;
+        if (type != null) {
+            for (String accepted : new String[]{
+                "text",
+                "application/xml",
+                "application/sql",
+                "application/graphql",
+                "application/ld+json",
+                "application/javascript",
+                "application/json"
+            }) {
+                if (type.startsWith(accepted)) {
+                    return false;
+                }
+            }
+        }
+        getLog().debug("filetype: " + type + "(binary:" + binary + ")");
+        return binary;
     }
-    
+
     private void handleFile(File f, IgnoreRules ir,
             ViolationHandler handler,
             ResourceProperties editorConfigProperties) throws IOException {
@@ -159,6 +176,7 @@ public class ForceFormatMojo extends AbstractMojo {
                 handleFile(insideFolder, ir, handler, editorConfigProperties);
             }
         } else {
+            getLog().debug("Found a file '{}'" + f.getPath());
             if (!ir.isIgnored(f) && !isBinaryFile(f)) {
                 formatWithEditorconfig(f, handler, editorConfigProperties);
             }
@@ -167,7 +185,6 @@ public class ForceFormatMojo extends AbstractMojo {
 
     private void formatWithEditorconfig(File file,
             ViolationHandler handler, ResourceProperties editorConfigProperties) throws IOException {
-        getLog().debug("Processing file '{}'" + file.getPath());
         if (!editorConfigProperties.getProperties().isEmpty()) {
             final Charset useEncoding = Charsets
                     .forName(editorConfigProperties.getValue(PropertyType.charset, "UTF-8", true));
@@ -226,7 +243,7 @@ public class ForceFormatMojo extends AbstractMojo {
                 .toFile();
         if (!couldBeExistingFile.exists()
                 || couldBeExistingFile.exists()
-                && !Arrays.equals(content.getBytes("UTF-8"), Files.toByteArray(couldBeExistingFile))) {
+                && !Arrays.equals(content.getBytes("UTF-8"), Files.readAllBytes(couldBeExistingFile.toPath()))) {
             getLog().info("overwrites " + filepath);
             FileUtils.writeStringToFile(couldBeExistingFile, content, "UTF-8");
         }

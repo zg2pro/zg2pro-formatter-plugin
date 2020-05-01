@@ -1,11 +1,10 @@
-package com.github.zg2pro.formatter.zg2pro.formatter.plugin;
+package com.github.zg2pro.formatter.plugin;
 
 import org.ec4j.lint.api.Logger;
 
 
 public class LoggerWrapper extends Logger.AbstractLogger {
     
-
     private final org.slf4j.Logger delegate;
     
     private static LogLevelSupplier toEc4jLogLevelSupplier(final org.slf4j.Logger log) {
