@@ -9,7 +9,7 @@
 
 Formats your java code during the validate phase of your maven lifecycle
 
-To skip the execution of the plugin, either put a <skip>true</skip> tag in config or run your "mvn install" command with -Dzg2pro.format.skip=true
+To skip the execution of the plugin, either put a `<skip>true</skip>` tag in config or run your `mvn install` command with `-Dzg2pro.format.skip=true`
 
 ## Basic usage
 
@@ -17,8 +17,7 @@ To skip the execution of the plugin, either put a <skip>true</skip> tag in confi
 
 To install it in your project your project:
 
-[source,xml]
-----
+````xml
   <plugin>
     <groupId>com.github.zg2pro.formatter</groupId>
     <artifactId>zg2pro-formatter-plugin</artifactId>
@@ -31,7 +30,7 @@ To install it in your project your project:
       </execution>
     </executions>
   </plugin>
-----
+````
 
 This should be put only in the root pom.xml
 
