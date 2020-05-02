@@ -18,7 +18,7 @@
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <netbeans.hint.deploy.server>gfv3ee6</netbeans.hint.deploy.server>
-	<spring-version>3.2.1.RELEASE</spring-version>
+	<spring-version>5.2.6.RELEASE</spring-version>
     </properties>
 
     <dependencies>
