@@ -7,3 +7,5 @@ languages:
     test:
       include:
         - /src/test/java/.*
+exclude:
+  - /src/test/resources/.*
