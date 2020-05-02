@@ -57,17 +57,16 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     private MavenProject project;
     private FileOverwriter fileOverwriter;
+    private final List<Linter> filteredLinters = Arrays.asList(new XmlLinter(), new TextLinter());
 
     public EditorConfigPartHandler(MavenProject project, FileOverwriter fileOverwriter) {
         this.project = project;
         this.fileOverwriter = fileOverwriter;
     }
 
-
     public void overwriteEditorconfig() throws IOException {
         fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), ".editorconfig");
     }
-    
 
     public void cleanEditorconfigsInSubmodules() {
         File currentModuleEditorConfig = project.getFile().getParentFile().toPath().resolve(".editorconfig").toFile();
@@ -76,7 +75,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             currentModuleEditorConfig.delete();
         }
     }
-    
+
     public void executeEditorConfigOnGitRepo(String rootDirectory)
             throws MojoExecutionException {
         try {
@@ -121,6 +120,9 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             for (String accepted : new String[]{
                 "text",
                 "application/xml",
+                "application/xsl",
+                "application/html",
+                "application/xhtml",
                 "application/sql",
                 "application/graphql",
                 "application/ld+json",
@@ -161,7 +163,6 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             final org.ec4j.lint.api.Resource resource = new org.ec4j.lint.api.Resource(file.toPath(), file.toPath(), useEncoding);
             //the file can be in index but removed by the developer
             if (resource.getPath().toFile().exists()) {
-                final List<Linter> filteredLinters = Arrays.asList(new XmlLinter(), new TextLinter());
                 ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
                 while (state != ViolationHandler.ReturnState.FINISHED) {
                     for (Linter linter : filteredLinters) {
@@ -174,7 +175,5 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             }
         }
     }
-
-    
 
 }
