@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.zg2pro.formatter</groupId>
     <artifactId>zg2pro-formatter-plugin</artifactId>
-    <version>0.1</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -14,8 +14,6 @@
         <version.org.ec4j.linters>0.1.2</version.org.ec4j.linters>
     </properties>
     <url>https://github.com/zg2pro/zg2pro-formatter-plugin</url>
-    <name>zg2pro-formatter-plugin</name>
-    <description>This maven plugin enabled strong rules for formatting your java project, without relying on the IDEs formatting features</description>
 
     <licenses>
         <license>
