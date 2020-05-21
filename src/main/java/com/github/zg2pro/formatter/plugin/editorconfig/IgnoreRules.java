@@ -220,8 +220,8 @@ public class IgnoreRules {
             return false;
         }
 
-        if (!pattern.startsWith(File.separator)) {
-            pattern = "*" + File.separator + pattern;
+        if (!pattern.startsWith("/")) {
+            pattern = "*/" + pattern;
         }
 
         String repoPath = toCheckFor.getAbsolutePath().substring(db.getWorkTree().getAbsolutePath().length());
