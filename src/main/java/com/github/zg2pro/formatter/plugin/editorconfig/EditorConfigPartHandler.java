@@ -26,13 +26,14 @@ package com.github.zg2pro.formatter.plugin.editorconfig;
 import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.ec4j.core.Cache;
@@ -57,7 +58,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     private MavenProject project;
     private FileOverwriter fileOverwriter;
-    private final List<Linter> filteredLinters = Arrays.asList(new XmlLinter(), new TextLinter());
+    private final Linter textLinter = new TextLinter();
+    private final Linter xmlLinter = new XmlLinter();
 
     public EditorConfigPartHandler(MavenProject project, FileOverwriter fileOverwriter) {
         this.project = project;
@@ -96,12 +98,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             File currentModuleFolder = project.getFile().getParentFile();
             List<String> subModules = project.getModules();
 
-            for (File insideModule : currentModuleFolder.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return !subModules.contains(name);
-                }
-            })) {
+            for (File insideModule : currentModuleFolder.listFiles(
+                    (File dir, String name) -> !subModules.contains(name))) {
                 handleFile(insideModule, ir, handler, editorConfigProperties);
             }
 
@@ -113,26 +111,45 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         }
     }
 
+    private static final Map<String, Boolean> FILETYPES_ARE_XML = new HashMap<>();
+
+    static {
+        FILETYPES_ARE_XML.put("text", false);
+        FILETYPES_ARE_XML.put("application/xml", true);
+        FILETYPES_ARE_XML.put("application/xsl", true);
+        FILETYPES_ARE_XML.put("application/html", true);
+        FILETYPES_ARE_XML.put("application/xhtml", true);
+        FILETYPES_ARE_XML.put("application/sql", false);
+        FILETYPES_ARE_XML.put("application/graphql", false);
+        FILETYPES_ARE_XML.put("application/ld+json", false);
+        FILETYPES_ARE_XML.put("application/javascript", false);
+        FILETYPES_ARE_XML.put("application/json", false);
+        FILETYPES_ARE_XML.put("application/x-sh", false);
+        FILETYPES_ARE_XML.put("application/x-bash", false);
+    }
+
     private boolean isBinaryFile(File f) throws IOException {
         String type = Files.probeContentType(f.toPath());
         boolean binary = true;
         if (type != null) {
-            for (String accepted : new String[]{
-                "text",
-                "application/xml",
-                "application/xsl",
-                "application/html",
-                "application/xhtml",
-                "application/sql",
-                "application/graphql",
-                "application/ld+json",
-                "application/javascript",
-                "application/json",
-                "application/x-sh",
-                "application/x-bash"
-            }) {
+            for (String accepted : FILETYPES_ARE_XML.keySet()) {
                 if (type.startsWith(accepted)) {
                     return false;
+                }
+            }
+        }
+        getLog().debug("filetype: " + type + "(xml:" + binary + ")");
+        return binary;
+    }
+
+    private boolean isXmlFile(File f) throws IOException {
+        String type = Files.probeContentType(f.toPath());
+        boolean binary = false;
+        if (type != null) {
+
+            for (Map.Entry<String, Boolean> accepted : FILETYPES_ARE_XML.entrySet()) {
+                if (type.startsWith(accepted.getKey())) {
+                    return accepted.getValue();
                 }
             }
         }
@@ -144,7 +161,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             ViolationHandler handler,
             ResourceProperties editorConfigProperties) throws IOException {
         if (f.isDirectory()) {
-            if (!ir.isIgnored(f)){
+            if (!ir.isIgnored(f)) {
                 for (File insideFolder : f.listFiles()) {
                     handleFile(insideFolder, ir, handler, editorConfigProperties);
                 }
@@ -167,11 +184,12 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             if (resource.getPath().toFile().exists()) {
                 ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
                 while (state != ViolationHandler.ReturnState.FINISHED) {
-                    for (Linter linter : filteredLinters) {
-                        getLog().debug("Processing file using linter " + linter.getClass().getName());
-                        handler.startFile(resource);
-                        linter.process(resource, editorConfigProperties, handler);
+                    handler.startFile(resource);
+                    getLog().debug("Processing file using  linters ");
+                    if (isXmlFile(resource.getPath().toFile())) {
+                        xmlLinter.process(resource, editorConfigProperties, handler);
                     }
+                    textLinter.process(resource, editorConfigProperties, handler);
                     state = handler.endFile();
                 }
             }
