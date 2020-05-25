@@ -144,8 +144,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             ViolationHandler handler,
             ResourceProperties editorConfigProperties) throws IOException {
         if (f.isDirectory()) {
-            for (File insideFolder : f.listFiles()) {
-                handleFile(insideFolder, ir, handler, editorConfigProperties);
+            if (!ir.isIgnored(f)){
+                for (File insideFolder : f.listFiles()) {
+                    handleFile(insideFolder, ir, handler, editorConfigProperties);
+                }
             }
         } else {
             getLog().debug("Found a file '{}'" + f.getPath());
