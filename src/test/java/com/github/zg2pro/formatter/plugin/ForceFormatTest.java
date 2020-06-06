@@ -64,15 +64,15 @@ public class ForceFormatTest {
         testPluginByGithubZg2proProject("springmvc-ejb-keynectis", "before-formats");
     }
 
-//    @Test
-//    public void checkSpringRestBasis() throws Exception {
-//        testPluginByGithubZg2proProject("spring-rest-basis", "master");
-//    }
-//
-//    @Test
-//    public void checkSpringShell() throws Exception {
-//        testPluginByGithubZg2proProject("spring-shell", "master");
-//    }
+    @Test
+    public void checkSnail() throws Exception {
+        testPluginByGithubZg2proProject("snail", "master");
+    }
+
+    @Test
+    public void checkSpringDataExamples() throws Exception {
+        testPluginByGithubZg2proProject("spring-data-examples", "master");
+    }
 
     private void testPluginByGithubZg2proProject(String projectName, String branchName) throws GitAPIException, IOException, Exception {
         File projectDir = new File("target/test-classes/projects/" + projectName);
