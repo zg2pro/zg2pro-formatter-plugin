@@ -1,9 +1,7 @@
-language: java
+language: shell
 os:
   - windows
   - linux
-jdk:
-  - oraclejdk13
 sudo: false
 cache:
   directories:
