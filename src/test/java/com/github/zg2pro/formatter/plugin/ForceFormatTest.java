@@ -24,7 +24,6 @@
 package com.github.zg2pro.formatter.plugin;
 
 import io.takari.maven.testing.TestResources;
-import io.takari.maven.testing.executor.MavenExecution;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
@@ -65,15 +64,15 @@ public class ForceFormatTest {
         testPluginByGithubZg2proProject("springmvc-ejb-keynectis", "before-formats");
     }
 
-    @Test
-    public void checkSpringRestBasis() throws Exception {
-        testPluginByGithubZg2proProject("spring-rest-basis", "master");
-    }
-
-    @Test
-    public void checkSpringShell() throws Exception {
-        testPluginByGithubZg2proProject("spring-shell", "master");
-    }
+//    @Test
+//    public void checkSpringRestBasis() throws Exception {
+//        testPluginByGithubZg2proProject("spring-rest-basis", "master");
+//    }
+//
+//    @Test
+//    public void checkSpringShell() throws Exception {
+//        testPluginByGithubZg2proProject("spring-shell", "master");
+//    }
 
     private void testPluginByGithubZg2proProject(String projectName, String branchName) throws GitAPIException, IOException, Exception {
         File projectDir = new File("target/test-classes/projects/" + projectName);
@@ -96,15 +95,11 @@ public class ForceFormatTest {
 
         File projDir = resources.getBasedir(projectName);
 
-        MavenExecution mavenExec = verifier.forProject(projDir) //
+        verifier.forProject(projDir) //
                 .withCliOption("-X") // debug
-                .withCliOption("-B") // batch
-                ;
-
-        mavenExec //
-                .execute("validate") //
-                // .assertLogText("[DEBUG] hook placement") //
-                ;
+                .withCliOption("-B")
+                .execute("clean","compile")
+                .assertErrorFreeLog();
     }
 
 }
