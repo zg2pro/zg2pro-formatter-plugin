@@ -9,4 +9,6 @@ cache:
   directories:
     - $HOME/.m2
 install: true
+import:
+  - zg2pro/Gravis-CI:.travis.yml
 script: mvn install
