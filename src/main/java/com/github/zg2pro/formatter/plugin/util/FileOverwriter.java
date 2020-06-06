@@ -41,7 +41,7 @@ public class FileOverwriter extends AbstractFormatterService {
 
     public void checkFileAndOverwriteIfNeedBe(File projectFile, String filepath)
             throws IOException {
-        InputStream ecStream = this.getClass().getClassLoader().getResourceAsStream(filepath.replaceAll("\\.git", "git"));
+        InputStream ecStream = this.getClass().getClassLoader().getResourceAsStream(filepath);
         byte[] targetArray = new byte[ecStream.available()];
         ecStream.read(targetArray);
         String content = new String(targetArray, "UTF-8");
@@ -57,7 +57,7 @@ public class FileOverwriter extends AbstractFormatterService {
         File couldBeExistingFile = projectFile
                 .getParentFile()
                 .toPath()
-                .resolve(filepath)
+                .resolve("."+filepath)
                 .toFile();
         if (!couldBeExistingFile.exists()
                 || couldBeExistingFile.exists()
