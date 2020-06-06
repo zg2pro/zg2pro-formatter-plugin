@@ -78,22 +78,9 @@ public class HookPartHandler {
     public void gitHookPluginExecution(Repository repo)
             throws MojoExecutionException, MojoFailureException, IOException {
         StoredConfig config = repo.getConfig();
-        //final String[] conf = stringToConfigArray("core.hooksPath");
         config.setString("core", null, "hooksPath", ".git/hooks");
         config.save();
     }
 
-//    private String[] stringToConfigArray(final String string) throws MojoFailureException {
-//        final String[] split = string.split("\\.");
-//        final byte sections = 3;
-//        if (split.length > sections || split.length < 2) {
-//            throw new MojoFailureException("Git config '" + string + "' must include 1-2 sections separated by stops.");
-//        }
-//
-//        final String name = split[split.length - 1];
-//        final String subsection = split.length == sections ? split[1] : null;
-//        final String section = split[0];
-//
-//        return new String[]{section, subsection, name};
-//    }
+
 }
