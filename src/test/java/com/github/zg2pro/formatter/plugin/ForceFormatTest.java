@@ -30,9 +30,11 @@ import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 import java.io.File;
+import java.io.IOException;
 import static java.util.Collections.singleton;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,9 +61,21 @@ public class ForceFormatTest {
     }
 
     @Test
-    public void check() throws Exception {
-        String projectName = "springmvc-ejb-keynectis";
+    public void checkSpringMvcKeynectis() throws Exception {
+        testPluginByGithubZg2proProject("springmvc-ejb-keynectis", "before-formats");
+    }
 
+    @Test
+    public void checkSpringRestBasis() throws Exception {
+        testPluginByGithubZg2proProject("spring-rest-basis", "master");
+    }
+
+    @Test
+    public void checkSpringShell() throws Exception {
+        testPluginByGithubZg2proProject("spring-shell", "master");
+    }
+
+    private void testPluginByGithubZg2proProject(String projectName, String branchName) throws GitAPIException, IOException, Exception {
         File projectDir = new File("target/test-classes/projects/" + projectName);
         if (projectDir.exists()) {
             FileUtils.cleanDirectory(projectDir);
@@ -76,8 +90,8 @@ public class ForceFormatTest {
         Git git = Git.cloneRepository()
                 .setURI("https://github.com/zg2pro/" + projectName + ".git")
                 .setDirectory(projectDir)
-                .setBranchesToClone(singleton("refs/heads/before-formats"))
-                .setBranch("refs/heads/before-formats")
+                .setBranchesToClone(singleton("refs/heads/" + branchName))
+                .setBranch("refs/heads/" + branchName)
                 .call();
 
         File projDir = resources.getBasedir(projectName);
