@@ -30,6 +30,9 @@ import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 import java.io.File;
+import static java.util.Collections.singleton;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,38 +42,55 @@ import org.junit.runner.RunWith;
  * @author zg2pro
  */
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({ "3.6.3" })
+@MavenVersions({"3.6.3"})
 public class ForceFormatTest {
-   
-    
+
     @Rule
     public final TestResources resources = new TestResources(
-            "src/test/resources/projects", 
-            "target/test-classes/projects"
+            "target/test-classes/projects",
+            "target/test-classes/transformed-projects"
     );
     public final MavenRuntime verifier;
-    
-    
+
     public ForceFormatTest(MavenRuntimeBuilder runtimeBuilder) throws Exception {
         this.verifier = runtimeBuilder //
                 //.withCliOptions(opts) //
                 .build();
     }
-    
+
     @Test
     public void check() throws Exception {
+        String projectName = "springmvc-ejb-keynectis";
 
-        File projDir = resources.getBasedir("spring-ejb-keynectis-vBefore-format");
+        File projectDir = new File("target/test-classes/projects/" + projectName);
+        if (projectDir.exists()) {
+            FileUtils.cleanDirectory(projectDir);
+            projectDir.delete();
+        }
+        File projectDirTransformed = new File("target/test-classes/transformed-projects/" + projectName);
+        if (projectDirTransformed.exists()) {
+            FileUtils.cleanDirectory(projectDirTransformed);
+            projectDirTransformed.delete();
+        }
+
+        Git git = Git.cloneRepository()
+                .setURI("https://github.com/zg2pro/" + projectName + ".git")
+                .setDirectory(projectDir)
+                .setBranchesToClone(singleton("refs/heads/before-formats"))
+                .setBranch("refs/heads/before-formats")
+                .call();
+
+        File projDir = resources.getBasedir(projectName);
 
         MavenExecution mavenExec = verifier.forProject(projDir) //
                 .withCliOption("-X") // debug
                 .withCliOption("-B") // batch
-        ;
-        
+                ;
+
         mavenExec //
                 .execute("validate") //
-               // .assertLogText("[DEBUG] hook placement") //
-         ;
+                // .assertLogText("[DEBUG] hook placement") //
+                ;
     }
-    
+
 }
