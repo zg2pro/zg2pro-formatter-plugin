@@ -1,12 +1,21 @@
-language: shell
+language: minimal
 os:
-  - windows
   - linux
-sudo: false
+  - windows
+env:
+  global:
+    - GRAVIS_REPO="https://github.com/DanySK/Gravis-CI.git"
+    - GRAVIS="$HOME/gravis"
+  matrix:
+    - JDK="adopt@1.8.212-04"
+    - JDK="adopt-openj9@1.11"
+    - MAVEN_VERSION="3.6.3"
+before_install:
+  - travis_retry git clone --depth 1 $GRAVIS_REPO $GRAVIS
+  - source $GRAVIS/install-jdk
+  - source $GRAVIS/install-maven
 cache:
   directories:
+    - $HOME/.jabba/
     - $HOME/.m2
-install: true
-import:
-  - zg2pro/Gravis-CI:.travis.yml
-script: mvn install
+script: mvn clean install
