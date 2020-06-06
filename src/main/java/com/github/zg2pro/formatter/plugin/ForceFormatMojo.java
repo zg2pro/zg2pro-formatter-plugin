@@ -41,6 +41,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Repository;
 
 /**
  * @author zg2pro
@@ -67,7 +69,7 @@ public class ForceFormatMojo extends AbstractMojo {
 
     private void initServices() {
         fileOverwriter = new FileOverwriter();
-        hookHandler = new HookPartHandler(project, session, pluginManager, fileOverwriter);
+        hookHandler = new HookPartHandler(project, session, pluginManager, fileOverwriter, skip);
         prettierHandler = new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler = new EditorConfigPartHandler(project, fileOverwriter);
     }
@@ -78,7 +80,6 @@ public class ForceFormatMojo extends AbstractMojo {
                     .info(
                             "Skipping plugin execution (actually repositionning git original hook)"
                     );
-            hookHandler.gitHookPluginExecution(".git/hooks/");
         }
         return skip;
     }
@@ -86,14 +87,27 @@ public class ForceFormatMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         initServices();
-        if (handleSkipOption()){
-            return;
-        }
         String rootDirectory = session.getExecutionRootDirectory();
         String rootDirectoryPom = rootDirectory + File.separatorChar + "pom.xml";
+        File projectBaseDir = new File(rootDirectory);
         getLog().debug("rootDirectoryPom:" + rootDirectoryPom);
         String currentModulePom = project.getFile().toString();
         getLog().debug("currentModulePom:" + currentModulePom);
+        Repository repo = null;
+        try {
+            Git git = Git.open(projectBaseDir);
+            repo = git.getRepository();
+            getLog().info("executes git hook placement");
+            hookHandler.gitHookPluginExecution(repo);
+        } catch (IOException ex) {
+            throw new MojoExecutionException(
+                    "could not open this folder with jgit",
+                    ex
+            );
+        }
+        if (handleSkipOption()) {
+            return;
+        }
         if (StringUtils.equals(rootDirectoryPom, currentModulePom)) {
             getLog().info("handling multimodule root directory setup");
             try {
@@ -107,8 +121,6 @@ public class ForceFormatMojo extends AbstractMojo {
                         e
                 );
             }
-            getLog().info("executes git hook placement");
-            hookHandler.gitHookPluginExecution(".hooks/");
         } else {
             getLog().debug("removal of other instance of .editorconfig in submodules");
             editorconfigHandler.cleanEditorconfigsInSubmodules();
@@ -117,7 +129,7 @@ public class ForceFormatMojo extends AbstractMojo {
         prettierHandler.prettify();
 
         getLog().info("executes editorconfig");
-        editorconfigHandler.executeEditorConfigOnGitRepo(rootDirectory);
+        editorconfigHandler.executeEditorConfigOnGitRepo(projectBaseDir, repo);
     }
 
 }

@@ -29,7 +29,6 @@ package com.github.zg2pro.formatter.plugin.util;
  */
 public class DependenciesVersions {
 
-    public static String GIT_HOOK_MAVEN_PLUGIN_VERSION = "3.0.0";
-    public static String PRETTIER_JAVA_MAVEN_PLUGIN_VERSION = "0.6";
+    public static String PRETTIER_JAVA_MAVEN_PLUGIN_VERSION = "0.8";
     
 }

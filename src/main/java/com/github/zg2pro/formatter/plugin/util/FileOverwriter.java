@@ -45,12 +45,14 @@ public class FileOverwriter extends AbstractFormatterService {
         byte[] targetArray = new byte[ecStream.available()];
         ecStream.read(targetArray);
         String content = new String(targetArray, "UTF-8");
-        if (isWindows) {
-            getLog().debug("windows recognized, checking end of lines in editorconfig");
-            content = content.replace("end_of_line = lf", "end_of_line = crlf");
-        } else {
-            getLog().debug("linux recognized, checking end of lines in editorconfig");
-            content = content.replace("end_of_line = crlf", "end_of_line = lf");
+        if (content.contains("end_of_line")) {
+            if (isWindows) {
+                getLog().debug("windows recognized, checking end of lines in editorconfig");
+                content = content.replace("end_of_line = lf", "end_of_line = crlf");
+            } else {
+                getLog().debug("linux recognized, checking end of lines in editorconfig");
+                content = content.replace("end_of_line = crlf", "end_of_line = lf");
+            }
         }
         File couldBeExistingFile = projectFile
                 .getParentFile()
@@ -63,7 +65,7 @@ public class FileOverwriter extends AbstractFormatterService {
             getLog().info("overwrites " + filepath);
             FileUtils.writeStringToFile(couldBeExistingFile, content, "UTF-8");
         }
-        
+
     }
 
 }

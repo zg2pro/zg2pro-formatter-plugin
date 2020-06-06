@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,6 @@ import org.ec4j.lint.api.Linter;
 import org.ec4j.lint.api.ViolationHandler;
 import org.ec4j.linters.TextLinter;
 import org.ec4j.linters.XmlLinter;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.LoggerFactory;
 
@@ -78,14 +76,11 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         }
     }
 
-    public void executeEditorConfigOnGitRepo(String rootDirectory)
+    public void executeEditorConfigOnGitRepo(File projectBaseDir, Repository repo)
             throws MojoExecutionException {
         try {
-            File projectBaseDir = new File(rootDirectory);
-            Git git = Git.open(projectBaseDir);
-            Repository repo = git.getRepository();
             IgnoreRules ir = new IgnoreRules(repo);
-
+            
             final ViolationHandler handler = new FormattingHandler(false, ".bak",
                     new LoggerWrapper(LoggerFactory.getLogger(FormattingHandler.class)));
             final ResourcePropertiesService resourcePropertiesService = ResourcePropertiesService.builder() //

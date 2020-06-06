@@ -23,23 +23,15 @@
  */
 package com.github.zg2pro.formatter.plugin.hook;
 
-import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.GIT_HOOK_MAVEN_PLUGIN_VERSION;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.IOException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.executionEnvironment;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.goal;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.groupId;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.name;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 
 /**
  *
@@ -53,40 +45,55 @@ public class HookPartHandler {
 
     private BuildPluginManager pluginManager;
     private FileOverwriter fileOverwriter;
+    private boolean skip;
 
-    public HookPartHandler(MavenProject project, MavenSession session, BuildPluginManager pluginManager, FileOverwriter fileOverwriter) {
+    public HookPartHandler(MavenProject project, MavenSession session, BuildPluginManager pluginManager, FileOverwriter fileOverwriter, boolean skip) {
         this.project = project;
         this.session = session;
         this.pluginManager = pluginManager;
         this.fileOverwriter = fileOverwriter;
+        this.skip = skip;
     }
 
     public void overwriteCommitHook() throws IOException {
-        String hookfilename = ".hooks/pre-commit";
-        fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), hookfilename);
-        if (!project.getFile()
-                .getParentFile()
-                .toPath()
-                .resolve(hookfilename)
-                .toFile().setExecutable(true)) {
-            throw new IllegalStateException("please make your " + hookfilename + " executable");
+        String hookfilename = ".git/hooks/pre-commit";
+        if (skip) {
+            project.getFile()
+                    .getParentFile()
+                    .toPath()
+                    .resolve(hookfilename).toFile().delete();
+        } else {
+            fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), hookfilename);
+            if (!project.getFile()
+                    .getParentFile()
+                    .toPath()
+                    .resolve(hookfilename)
+                    .toFile().setExecutable(true)) {
+                throw new IllegalStateException("please make your " + hookfilename + " executable");
+            }
+
         }
     }
 
-    public void gitHookPluginExecution(String position)
-            throws MojoExecutionException {
-        executeMojo(
-                plugin(
-                        groupId("com.rudikershaw.gitbuildhook"),
-                        artifactId("git-build-hook-maven-plugin"),
-                        version(GIT_HOOK_MAVEN_PLUGIN_VERSION)
-                ),
-                goal("configure"),
-                configuration(
-                        element(name("gitConfig"), element("core.hooksPath", position))
-                ),
-                executionEnvironment(project, session, pluginManager)
-        );
+    public void gitHookPluginExecution(Repository repo)
+            throws MojoExecutionException, MojoFailureException, IOException {
+        StoredConfig config = repo.getConfig();
+        //final String[] conf = stringToConfigArray("core.hooksPath");
+        config.setString("core", null, "hooksPath", ".git/hooks");
+        config.save();
     }
 
+//    private String[] stringToConfigArray(final String string) throws MojoFailureException {
+//        final String[] split = string.split("\\.");
+//        final byte sections = 3;
+//        if (split.length > sections || split.length < 2) {
+//            throw new MojoFailureException("Git config '" + string + "' must include 1-2 sections separated by stops.");
+//        }
+//
+//        final String name = split[split.length - 1];
+//        final String subsection = split.length == sections ? split[1] : null;
+//        final String section = split[0];
+//
+//        return new String[]{section, subsection, name};
+//    }
 }
