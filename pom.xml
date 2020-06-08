@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.zg2pro.formatter</groupId>
     <artifactId>zg2pro-formatter-plugin</artifactId>
-    <version>0.4</version>
+    <version>0.5-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
