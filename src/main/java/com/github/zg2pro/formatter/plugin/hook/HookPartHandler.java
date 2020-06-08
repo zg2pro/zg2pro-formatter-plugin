@@ -55,21 +55,21 @@ public class HookPartHandler {
         this.skip = skip;
     }
 
-    public void overwriteCommitHook() throws IOException {
-        String hookfilename = ".git/hooks/pre-commit";
+     public void overwriteCommitHook() throws IOException {
+        String hookfilename = "git/hooks/pre-commit";
         if (skip) {
             project.getFile()
                     .getParentFile()
                     .toPath()
-                    .resolve(hookfilename).toFile().delete();
+                    .resolve("." + hookfilename).toFile().delete();
         } else {
             fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), hookfilename);
             if (!project.getFile()
                     .getParentFile()
                     .toPath()
-                    .resolve(hookfilename)
+                    .resolve("." + hookfilename)
                     .toFile().setExecutable(true)) {
-                throw new IllegalStateException("please make your " + hookfilename + " executable");
+                throw new IllegalStateException("please make your " + "." + hookfilename + " executable");
             }
 
         }
