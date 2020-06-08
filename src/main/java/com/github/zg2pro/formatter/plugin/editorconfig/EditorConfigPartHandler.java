@@ -65,7 +65,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     }
 
     public void overwriteEditorconfig() throws IOException {
-        fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), ".editorconfig");
+        fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), "editorconfig");
     }
 
     public void cleanEditorconfigsInSubmodules() {
