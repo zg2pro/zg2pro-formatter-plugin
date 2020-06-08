@@ -80,7 +80,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             throws MojoExecutionException {
         try {
             IgnoreRules ir = new IgnoreRules(repo);
-            
+
             final ViolationHandler handler = new FormattingHandler(false, ".bak",
                     new LoggerWrapper(LoggerFactory.getLogger(FormattingHandler.class)));
             final ResourcePropertiesService resourcePropertiesService = ResourcePropertiesService.builder() //
@@ -110,10 +110,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     static {
         FILETYPES_ARE_XML.put("text", false);
-        FILETYPES_ARE_XML.put("application/xml", true);
-        FILETYPES_ARE_XML.put("application/xsl", true);
-        FILETYPES_ARE_XML.put("application/html", true);
-        FILETYPES_ARE_XML.put("application/xhtml", true);
+        for (String xmls : new String[]{"xml", "xsl", "html", "xhtml"}) {
+            FILETYPES_ARE_XML.put("application/" + xmls, true);
+            FILETYPES_ARE_XML.put("text/" + xmls, true);
+        }
         FILETYPES_ARE_XML.put("application/sql", false);
         FILETYPES_ARE_XML.put("application/graphql", false);
         FILETYPES_ARE_XML.put("application/ld+json", false);
@@ -125,6 +125,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     private boolean isBinaryFile(File f) throws IOException {
         String type = Files.probeContentType(f.toPath());
+        getLog().debug("filetype: " + type);
         boolean binary = true;
         if (type != null) {
             for (String accepted : FILETYPES_ARE_XML.keySet()) {
@@ -133,23 +134,20 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                 }
             }
         }
-        getLog().debug("filetype: " + type + "(xml:" + binary + ")");
         return binary;
     }
 
     private boolean isXmlFile(File f) throws IOException {
         String type = Files.probeContentType(f.toPath());
-        boolean binary = false;
+        boolean isXml = false;
         if (type != null) {
-
             for (Map.Entry<String, Boolean> accepted : FILETYPES_ARE_XML.entrySet()) {
                 if (type.startsWith(accepted.getKey())) {
                     return accepted.getValue();
                 }
             }
         }
-        getLog().debug("filetype: " + type + "(binary:" + binary + ")");
-        return binary;
+        return isXml;
     }
 
     private void handleFile(File f, IgnoreRules ir,
@@ -180,10 +178,11 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                 ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
                 while (state != ViolationHandler.ReturnState.FINISHED) {
                     handler.startFile(resource);
-                    getLog().debug("Processing file using  linters ");
                     if (isXmlFile(resource.getPath().toFile())) {
+                        getLog().debug("linting file as xml");
                         xmlLinter.process(resource, editorConfigProperties, handler);
                     }
+                    getLog().debug("linting file as text");
                     textLinter.process(resource, editorConfigProperties, handler);
                     state = handler.endFile();
                 }
