@@ -98,7 +98,6 @@ public class IgnoreRules {
                 && toCheckFor.getName().equals(".git") 
                 || checkGitignoreFiles(toCheckFor);
 
-        getLog().debug("ignore in git: " + result);
         //X TODO check .git/info/excludes
         //X TODO check core.excludefiles
         return result;
