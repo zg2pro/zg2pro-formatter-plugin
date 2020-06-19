@@ -215,11 +215,15 @@ public class IgnoreRules {
             return false;
         }
 
+        if (pattern.endsWith("/")){
+            pattern = pattern.substring(0, pattern.length() - 1);
+        }
         if (!pattern.startsWith("/")) {
-            pattern = "*/" + pattern;
+            pattern = "*/" + pattern + "['/']{0,1}";
         }
 
         String repoPath = toCheckFor.getAbsolutePath().substring(db.getWorkTree().getAbsolutePath().length());
+        repoPath = repoPath.replaceAll("\\\\", "/");
         if (wildCardMatch(repoPath, pattern)) {
             return matchResult;
         }
@@ -227,7 +231,7 @@ public class IgnoreRules {
         //X TODO there are  possibly still a few matching rules missing!
         return false;
     }
-
+    
     /**
      * Check if the given file path matches the pattern. The pattern may contain
      * * wildcards.
