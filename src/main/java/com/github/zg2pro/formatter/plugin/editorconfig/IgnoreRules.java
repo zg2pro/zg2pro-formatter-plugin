@@ -95,8 +95,7 @@ public class IgnoreRules {
             throw new IllegalArgumentException("file to check object is null!");
         }
         boolean result = toCheckFor.getParentFile().equals(db.getWorkTree()) 
-                && toCheckFor.getName().equals(".git") 
-                || checkGitignoreFiles(toCheckFor);
+                && checkGitignoreFiles(toCheckFor);
 
         //X TODO check .git/info/excludes
         //X TODO check core.excludefiles
@@ -114,6 +113,9 @@ public class IgnoreRules {
      */
     private boolean checkGitignoreFiles(File toCheckFor)
             throws IOException, FileNotFoundException {
+        if (toCheckFor.getName().equals(".git") ) {
+            return true;
+        }
         if (!toCheckFor.getAbsolutePath().startsWith(db.getWorkTree().getAbsolutePath())) {
             throw new IllegalArgumentException("file must be inside the repositories working directory! " + toCheckFor.getAbsolutePath());
         }
@@ -128,16 +130,10 @@ public class IgnoreRules {
 
             File gitignore = new File(parseDir, ".gitignore");
             if (gitignore.exists()) {
-                FileInputStream fis = null;
-                try {
-                    fis = new FileInputStream(gitignore);
+                try (FileInputStream fis = new FileInputStream(gitignore) // ensure that the file gets closed!
+                ) {
                     if (parseGitIgnore(fis, parseDir, toCheckFor)) {
                         return true;
-                    }
-                } finally {
-                    // ensure that the file gets closed!
-                    if (fis != null) {
-                        fis.close();
                     }
                 }
             }
