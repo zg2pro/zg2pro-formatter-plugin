@@ -38,7 +38,7 @@ This should be put only in the root pom.xml
 
 At each execution, zg2pro-formatter-plugin goes through 1 preparation + 3 phases
 
-The preparation only takes place when building the root project of your multi-modules project. It will still be run in a single module project. This preparation consists of writing a standardized .editorconfig file to your root directory, as well as writing a standardized .hooks/pre-commit file. If you want to use a different editorconfig or if you want to use your own pre-commit hooks, this plugin is not for you.
+The preparation only takes place when building the root project of your multi-modules project. It will still be run in a single module project. This preparation consists of writing a standardized .editorconfig file to your root directory, as well as writing a standardized .git/hooks/pre-commit file. If you want to use a different editorconfig or if you want to use your own pre-commit hooks, this plugin is not for you.
 
 Then the first step, configures your git with the pre-commit script. This will check your code format everytime before you can commit your code with git. Each time, during this pre-commit, it will run the formatting. As the plugin formats the code by itself, if it finds unformatted code, you can restart your commit without any manual change.
 
