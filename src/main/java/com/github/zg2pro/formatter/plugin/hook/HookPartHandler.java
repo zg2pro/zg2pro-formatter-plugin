@@ -38,7 +38,6 @@ import org.eclipse.jgit.lib.StoredConfig;
  * @author zg2pro
  */
 public class HookPartHandler {
-
     private MavenProject project;
 
     private MavenSession session;
@@ -47,7 +46,13 @@ public class HookPartHandler {
     private FileOverwriter fileOverwriter;
     private boolean skip;
 
-    public HookPartHandler(MavenProject project, MavenSession session, BuildPluginManager pluginManager, FileOverwriter fileOverwriter, boolean skip) {
+    public HookPartHandler(
+        MavenProject project,
+        MavenSession session,
+        BuildPluginManager pluginManager,
+        FileOverwriter fileOverwriter,
+        boolean skip
+    ) {
         this.project = project;
         this.session = session;
         this.pluginManager = pluginManager;
@@ -55,32 +60,41 @@ public class HookPartHandler {
         this.skip = skip;
     }
 
-     public void overwriteCommitHook() throws IOException {
+    public void overwriteCommitHook() throws IOException {
         String hookfilename = "git/hooks/pre-commit";
         if (skip) {
-            project.getFile()
-                    .getParentFile()
-                    .toPath()
-                    .resolve("." + hookfilename).toFile().delete();
+            project
+                .getFile()
+                .getParentFile()
+                .toPath()
+                .resolve("." + hookfilename)
+                .toFile()
+                .delete();
         } else {
-            fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), hookfilename);
-            if (!project.getFile()
+            fileOverwriter.checkFileAndOverwriteIfNeedBe(
+                project.getFile(),
+                hookfilename
+            );
+            if (
+                !project
+                    .getFile()
                     .getParentFile()
                     .toPath()
                     .resolve("." + hookfilename)
-                    .toFile().setExecutable(true)) {
-                throw new IllegalStateException("please make your " + "." + hookfilename + " executable");
+                    .toFile()
+                    .setExecutable(true)
+            ) {
+                throw new IllegalStateException(
+                    "please make your " + "." + hookfilename + " executable"
+                );
             }
-
         }
     }
 
     public void gitHookPluginExecution(Repository repo)
-            throws MojoExecutionException, MojoFailureException, IOException {
+        throws MojoExecutionException, MojoFailureException, IOException {
         StoredConfig config = repo.getConfig();
         config.setString("core", null, "hooksPath", ".git/hooks");
         config.save();
     }
-
-
 }

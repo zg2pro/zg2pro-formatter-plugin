@@ -2,12 +2,12 @@ package com.github.zg2pro.formatter.plugin.editorconfig;
 
 import org.ec4j.lint.api.Logger;
 
-
 public class LoggerWrapper extends Logger.AbstractLogger {
-    
     private final org.slf4j.Logger delegate;
-    
-    private static LogLevelSupplier toEc4jLogLevelSupplier(final org.slf4j.Logger log) {
+
+    private static LogLevelSupplier toEc4jLogLevelSupplier(
+        final org.slf4j.Logger log
+    ) {
         return () -> {
             if (log.isTraceEnabled()) {
                 return LogLevel.TRACE;
@@ -49,5 +49,4 @@ public class LoggerWrapper extends Logger.AbstractLogger {
                 delegate.error(string, args);
         }
     }
-
 }

@@ -53,55 +53,78 @@ import org.slf4j.LoggerFactory;
  * @author zg2pro
  */
 public class EditorConfigPartHandler extends AbstractFormatterService {
-
     private MavenProject project;
     private FileOverwriter fileOverwriter;
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
 
-    public EditorConfigPartHandler(MavenProject project, FileOverwriter fileOverwriter) {
+    public EditorConfigPartHandler(
+        MavenProject project,
+        FileOverwriter fileOverwriter
+    ) {
         this.project = project;
         this.fileOverwriter = fileOverwriter;
     }
 
     public void overwriteEditorconfig() throws IOException {
-        fileOverwriter.checkFileAndOverwriteIfNeedBe(project.getFile(), "editorconfig");
+        fileOverwriter.checkFileAndOverwriteIfNeedBe(
+            project.getFile(),
+            "editorconfig"
+        );
     }
 
     public void cleanEditorconfigsInSubmodules() {
-        File currentModuleEditorConfig = project.getFile().getParentFile().toPath().resolve(".editorconfig").toFile();
+        File currentModuleEditorConfig = project
+            .getFile()
+            .getParentFile()
+            .toPath()
+            .resolve(".editorconfig")
+            .toFile();
         if (currentModuleEditorConfig.exists()) {
             getLog().debug("found one, deleting");
             currentModuleEditorConfig.delete();
         }
     }
 
-    public void executeEditorConfigOnGitRepo(File projectBaseDir, Repository repo)
-            throws MojoExecutionException {
+    public void executeEditorConfigOnGitRepo(
+        File projectBaseDir,
+        Repository repo
+    )
+        throws MojoExecutionException {
         try {
             IgnoreRules ir = new IgnoreRules(repo);
 
-            final ViolationHandler handler = new FormattingHandler(false, ".bak",
-                    new LoggerWrapper(LoggerFactory.getLogger(FormattingHandler.class)));
-            final ResourcePropertiesService resourcePropertiesService = ResourcePropertiesService.builder() //
-                    .cache(Cache.Caches.permanent()) //
-                    .build();
-            final ResourceProperties editorConfigProperties = resourcePropertiesService
-                    .queryProperties(Resource.Resources.ofPath(projectBaseDir.toPath().resolve(".editorconfig"), StandardCharsets.UTF_8));
+            final ViolationHandler handler = new FormattingHandler(
+                false,
+                ".bak",
+                new LoggerWrapper(
+                    LoggerFactory.getLogger(FormattingHandler.class)
+                )
+            );
+            final ResourcePropertiesService resourcePropertiesService = ResourcePropertiesService
+                .builder() //
+                .cache(Cache.Caches.permanent()) //
+                .build();
+            final ResourceProperties editorConfigProperties = resourcePropertiesService.queryProperties(
+                Resource.Resources.ofPath(
+                    projectBaseDir.toPath().resolve(".editorconfig"),
+                    StandardCharsets.UTF_8
+                )
+            );
             handler.startFiles();
 
             File currentModuleFolder = project.getFile().getParentFile();
             List<String> subModules = project.getModules();
 
             for (File insideModule : currentModuleFolder.listFiles(
-                    (File dir, String name) -> !subModules.contains(name))) {
+                (File dir, String name) -> !subModules.contains(name)
+            )) {
                 handleFile(insideModule, ir, handler, editorConfigProperties);
             }
-
         } catch (IOException ex) {
             throw new MojoExecutionException(
-                    "could not open this folder with jgit",
-                    ex
+                "could not open this folder with jgit",
+                ex
             );
         }
     }
@@ -110,7 +133,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     static {
         FILETYPES_ARE_XML.put("text", false);
-        for (String xmls : new String[]{"xml", "xsl", "html", "xhtml"}) {
+        for (String xmls : new String[] { "xml", "xsl", "html", "xhtml" }) {
             FILETYPES_ARE_XML.put("application/" + xmls, true);
             FILETYPES_ARE_XML.put("text/" + xmls, true);
         }
@@ -150,13 +173,22 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         return isXml;
     }
 
-    private void handleFile(File f, IgnoreRules ir,
-            ViolationHandler handler,
-            ResourceProperties editorConfigProperties) throws IOException {
+    private void handleFile(
+        File f,
+        IgnoreRules ir,
+        ViolationHandler handler,
+        ResourceProperties editorConfigProperties
+    )
+        throws IOException {
         if (f.isDirectory()) {
             if (!ir.isIgnored(f)) {
                 for (File insideFolder : f.listFiles()) {
-                    handleFile(insideFolder, ir, handler, editorConfigProperties);
+                    handleFile(
+                        insideFolder,
+                        ir,
+                        handler,
+                        editorConfigProperties
+                    );
                 }
             }
         } else {
@@ -167,27 +199,48 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         }
     }
 
-    private void formatWithEditorconfig(File file,
-            ViolationHandler handler, ResourceProperties editorConfigProperties) throws IOException {
+    private void formatWithEditorconfig(
+        File file,
+        ViolationHandler handler,
+        ResourceProperties editorConfigProperties
+    )
+        throws IOException {
         if (!editorConfigProperties.getProperties().isEmpty()) {
-            final Charset useEncoding = Resource.Charsets
-                    .forName(editorConfigProperties.getValue(PropertyType.charset, "UTF-8", true));
-            final org.ec4j.lint.api.Resource resource = new org.ec4j.lint.api.Resource(file.toPath(), file.toPath(), useEncoding);
+            final Charset useEncoding = Resource.Charsets.forName(
+                editorConfigProperties.getValue(
+                    PropertyType.charset,
+                    "UTF-8",
+                    true
+                )
+            );
+            final org.ec4j.lint.api.Resource resource = new org.ec4j.lint.api.Resource(
+                file.toPath(),
+                file.toPath(),
+                useEncoding
+            );
             //the file can be in index but removed by the developer
             if (resource.getPath().toFile().exists()) {
-                ViolationHandler.ReturnState state = ViolationHandler.ReturnState.RECHECK;
+                ViolationHandler.ReturnState state =
+                    ViolationHandler.ReturnState.RECHECK;
                 while (state != ViolationHandler.ReturnState.FINISHED) {
                     handler.startFile(resource);
                     if (isXmlFile(resource.getPath().toFile())) {
                         getLog().debug("linting file as xml");
-                        xmlLinter.process(resource, editorConfigProperties, handler);
+                        xmlLinter.process(
+                            resource,
+                            editorConfigProperties,
+                            handler
+                        );
                     }
                     getLog().debug("linting file as text");
-                    textLinter.process(resource, editorConfigProperties, handler);
+                    textLinter.process(
+                        resource,
+                        editorConfigProperties,
+                        handler
+                    );
                     state = handler.endFile();
                 }
             }
         }
     }
-
 }

@@ -36,36 +36,53 @@ import org.apache.commons.io.FileUtils;
  * @author zg2pro
  */
 public class FileOverwriter extends AbstractFormatterService {
+    private static boolean isWindows = System
+        .getProperty("os.name")
+        .toLowerCase()
+        .contains("win");
 
-    private static boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
-
-    public void checkFileAndOverwriteIfNeedBe(File projectFile, String filepath)
-            throws IOException {
-        InputStream ecStream = this.getClass().getClassLoader().getResourceAsStream(filepath);
+    public void checkFileAndOverwriteIfNeedBe(
+        File projectFile,
+        String filepath
+    )
+        throws IOException {
+        InputStream ecStream =
+            this.getClass().getClassLoader().getResourceAsStream(filepath);
         byte[] targetArray = new byte[ecStream.available()];
         ecStream.read(targetArray);
         String content = new String(targetArray, "UTF-8");
         if (content.contains("end_of_line")) {
             if (isWindows) {
-                getLog().debug("windows recognized, checking end of lines in editorconfig");
-                content = content.replace("end_of_line = lf", "end_of_line = crlf");
+                getLog()
+                    .debug(
+                        "windows recognized, checking end of lines in editorconfig"
+                    );
+                content =
+                    content.replace("end_of_line = lf", "end_of_line = crlf");
             } else {
-                getLog().debug("linux recognized, checking end of lines in editorconfig");
-                content = content.replace("end_of_line = crlf", "end_of_line = lf");
+                getLog()
+                    .debug(
+                        "linux recognized, checking end of lines in editorconfig"
+                    );
+                content =
+                    content.replace("end_of_line = crlf", "end_of_line = lf");
             }
         }
         File couldBeExistingFile = projectFile
-                .getParentFile()
-                .toPath()
-                .resolve("."+filepath)
-                .toFile();
-        if (!couldBeExistingFile.exists()
-                || couldBeExistingFile.exists()
-                && !Arrays.equals(content.getBytes("UTF-8"), Files.readAllBytes(couldBeExistingFile.toPath()))) {
+            .getParentFile()
+            .toPath()
+            .resolve("." + filepath)
+            .toFile();
+        if (
+            !couldBeExistingFile.exists() ||
+            couldBeExistingFile.exists() &&
+            !Arrays.equals(
+                content.getBytes("UTF-8"),
+                Files.readAllBytes(couldBeExistingFile.toPath())
+            )
+        ) {
             getLog().info("overwrites " + filepath);
             FileUtils.writeStringToFile(couldBeExistingFile, content, "UTF-8");
         }
-
     }
-
 }

@@ -24,10 +24,6 @@
 package com.github.zg2pro.formatter.plugin.prettier;
 
 import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.PRETTIER_JAVA_MAVEN_PLUGIN_VERSION;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.BuildPluginManager;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.project.MavenProject;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
@@ -37,19 +33,27 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.groupId;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
 
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.BuildPluginManager;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
+
 /**
  *
  * @author zg2pro
  */
 public class PrettierPartHandler {
-    
     private MavenProject project;
 
     private MavenSession session;
 
     private BuildPluginManager pluginManager;
 
-    public PrettierPartHandler(MavenProject project, MavenSession session, BuildPluginManager pluginManager) {
+    public PrettierPartHandler(
+        MavenProject project,
+        MavenSession session,
+        BuildPluginManager pluginManager
+    ) {
         this.project = project;
         this.session = session;
         this.pluginManager = pluginManager;
@@ -57,15 +61,14 @@ public class PrettierPartHandler {
 
     public void prettify() throws MojoExecutionException {
         executeMojo(
-                plugin(
-                        groupId("com.hubspot.maven.plugins"),
-                        artifactId("prettier-maven-plugin"),
-                        version(PRETTIER_JAVA_MAVEN_PLUGIN_VERSION)
-                ),
-                goal("write"),
-                configuration(),
-                executionEnvironment(project, session, pluginManager)
+            plugin(
+                groupId("com.hubspot.maven.plugins"),
+                artifactId("prettier-maven-plugin"),
+                version(PRETTIER_JAVA_MAVEN_PLUGIN_VERSION)
+            ),
+            goal("write"),
+            configuration(),
+            executionEnvironment(project, session, pluginManager)
         );
     }
-    
 }

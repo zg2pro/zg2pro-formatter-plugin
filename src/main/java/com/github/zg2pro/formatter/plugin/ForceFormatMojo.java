@@ -27,7 +27,6 @@ import com.github.zg2pro.formatter.plugin.editorconfig.EditorConfigPartHandler;
 import com.github.zg2pro.formatter.plugin.hook.HookPartHandler;
 import com.github.zg2pro.formatter.plugin.prettier.PrettierPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
-
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +49,6 @@ import org.eclipse.jgit.lib.Repository;
  */
 @Mojo(defaultPhase = LifecyclePhase.VALIDATE, name = "apply", threadSafe = true)
 public class ForceFormatMojo extends AbstractMojo {
-
     @Parameter(defaultValue = "false", property = "zg2pro.format.skip")
     private boolean skip;
 
@@ -70,17 +68,26 @@ public class ForceFormatMojo extends AbstractMojo {
 
     private void initServices() {
         fileOverwriter = new FileOverwriter();
-        hookHandler = new HookPartHandler(project, session, pluginManager, fileOverwriter, skip);
-        prettierHandler = new PrettierPartHandler(project, session, pluginManager);
-        editorconfigHandler = new EditorConfigPartHandler(project, fileOverwriter);
+        hookHandler =
+            new HookPartHandler(
+                project,
+                session,
+                pluginManager,
+                fileOverwriter,
+                skip
+            );
+        prettierHandler =
+            new PrettierPartHandler(project, session, pluginManager);
+        editorconfigHandler =
+            new EditorConfigPartHandler(project, fileOverwriter);
     }
 
     private boolean handleSkipOption() throws MojoExecutionException {
         if (skip) {
             getLog()
-                    .info(
-                            "Skipping plugin execution (actually repositionning git original hook)"
-                    );
+                .info(
+                    "Skipping plugin execution (actually repositionning git original hook)"
+                );
         }
         return skip;
     }
@@ -89,15 +96,20 @@ public class ForceFormatMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         initServices();
         String rootDirectory = session.getExecutionRootDirectory();
-        String rootDirectoryPom = rootDirectory + File.separatorChar + "pom.xml";
+        String rootDirectoryPom =
+            rootDirectory + File.separatorChar + "pom.xml";
         File projectBaseDir = new File(rootDirectory);
         getLog().debug("rootDirectoryPom:" + rootDirectoryPom);
         String currentModulePom = project.getFile().toString();
         getLog().debug("currentModulePom:" + currentModulePom);
         Repository repo = null;
-        boolean runningOnGitRepo = projectBaseDir.toPath().resolve(".git").toFile().exists();
+        boolean runningOnGitRepo = projectBaseDir
+            .toPath()
+            .resolve(".git")
+            .toFile()
+            .exists();
         try {
-            if (runningOnGitRepo){
+            if (runningOnGitRepo) {
                 Git git = Git.open(projectBaseDir);
                 repo = git.getRepository();
                 getLog().info("executes git hook placement");
@@ -105,14 +117,17 @@ public class ForceFormatMojo extends AbstractMojo {
             }
         } catch (IOException ex) {
             throw new MojoExecutionException(
-                    "could not open this folder with jgit",
-                    ex
+                "could not open this folder with jgit",
+                ex
             );
         }
         if (handleSkipOption()) {
             return;
         }
-        if (runningOnGitRepo && StringUtils.equals(rootDirectoryPom, currentModulePom)) {
+        if (
+            runningOnGitRepo &&
+            StringUtils.equals(rootDirectoryPom, currentModulePom)
+        ) {
             getLog().info("handling multimodule root directory setup");
             try {
                 getLog().debug("editorconfig");
@@ -121,21 +136,26 @@ public class ForceFormatMojo extends AbstractMojo {
                 hookHandler.overwriteCommitHook();
             } catch (IOException e) {
                 throw new MojoExecutionException(
-                        "could not write the .editorconfig file at root of project",
-                        e
+                    "could not write the .editorconfig file at root of project",
+                    e
                 );
             }
         } else {
-            getLog().debug("removal of other instance of .editorconfig in submodules");
+            getLog()
+                .debug(
+                    "removal of other instance of .editorconfig in submodules"
+                );
             editorconfigHandler.cleanEditorconfigsInSubmodules();
         }
         getLog().info("executes prettier java");
         prettierHandler.prettify();
 
-        if (repo != null){
+        if (repo != null) {
             getLog().info("executes editorconfig");
-            editorconfigHandler.executeEditorConfigOnGitRepo(projectBaseDir, repo);
+            editorconfigHandler.executeEditorConfigOnGitRepo(
+                projectBaseDir,
+                repo
+            );
         }
     }
-
 }

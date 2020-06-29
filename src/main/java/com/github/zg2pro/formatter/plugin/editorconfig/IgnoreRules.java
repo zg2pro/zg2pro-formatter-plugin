@@ -41,7 +41,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-
 import org.eclipse.jgit.lib.Repository;
 
 /**
@@ -49,7 +48,6 @@ import org.eclipse.jgit.lib.Repository;
  *
  */
 public class IgnoreRules {
-
     /**
      * The Repository the ignores are for.
      */
@@ -90,12 +88,13 @@ public class IgnoreRules {
      * @throws FileNotFoundException - when issues reading files
      */
     public boolean isIgnored(File toCheckFor)
-            throws FileNotFoundException, IOException {
+        throws FileNotFoundException, IOException {
         if (toCheckFor == null) {
             throw new IllegalArgumentException("file to check object is null!");
         }
-        boolean result = toCheckFor.getParentFile().equals(db.getWorkTree()) 
-                && checkGitignoreFiles(toCheckFor);
+        boolean result =
+            toCheckFor.getParentFile().equals(db.getWorkTree()) &&
+            checkGitignoreFiles(toCheckFor);
 
         //X TODO check .git/info/excludes
         //X TODO check core.excludefiles
@@ -112,12 +111,19 @@ public class IgnoreRules {
      * @throws FileNotFoundException
      */
     private boolean checkGitignoreFiles(File toCheckFor)
-            throws IOException, FileNotFoundException {
-        if (toCheckFor.getName().equals(".git") ) {
+        throws IOException, FileNotFoundException {
+        if (toCheckFor.getName().equals(".git")) {
             return true;
         }
-        if (!toCheckFor.getAbsolutePath().startsWith(db.getWorkTree().getAbsolutePath())) {
-            throw new IllegalArgumentException("file must be inside the repositories working directory! " + toCheckFor.getAbsolutePath());
+        if (
+            !toCheckFor
+                .getAbsolutePath()
+                .startsWith(db.getWorkTree().getAbsolutePath())
+        ) {
+            throw new IllegalArgumentException(
+                "file must be inside the repositories working directory! " +
+                toCheckFor.getAbsolutePath()
+            );
         }
         if (toCheckFor.getAbsolutePath().contains("/.git/")) {
             return true;
@@ -130,7 +136,8 @@ public class IgnoreRules {
 
             File gitignore = new File(parseDir, ".gitignore");
             if (gitignore.exists()) {
-                try (FileInputStream fis = new FileInputStream(gitignore) // ensure that the file gets closed!
+                try (
+                    FileInputStream fis = new FileInputStream(gitignore) // ensure that the file gets closed!
                 ) {
                     if (parseGitIgnore(fis, parseDir, toCheckFor)) {
                         return true;
@@ -152,9 +159,15 @@ public class IgnoreRules {
      * @return <code>true</code> if the given path should be ignored
      * @throws IOException
      */
-    private boolean parseGitIgnore(InputStream gitignore, File currentDir, File toCheckFor)
-            throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(gitignore));
+    private boolean parseGitIgnore(
+        InputStream gitignore,
+        File currentDir,
+        File toCheckFor
+    )
+        throws IOException {
+        BufferedReader br = new BufferedReader(
+            new InputStreamReader(gitignore)
+        );
         String line;
         while ((line = br.readLine()) != null) {
             if (parseLine(line, currentDir, toCheckFor)) {
@@ -215,14 +228,16 @@ public class IgnoreRules {
             return false;
         }
 
-        if (pattern.endsWith("/")){
+        if (pattern.endsWith("/")) {
             pattern = pattern.substring(0, pattern.length() - 1);
         }
         if (!pattern.startsWith("/")) {
             pattern = "*/" + pattern + "['/']{0,1}";
         }
 
-        String repoPath = toCheckFor.getAbsolutePath().substring(db.getWorkTree().getAbsolutePath().length());
+        String repoPath = toCheckFor
+            .getAbsolutePath()
+            .substring(db.getWorkTree().getAbsolutePath().length());
         repoPath = repoPath.replaceAll("\\\\", "/");
         if (wildCardMatch(repoPath, pattern)) {
             return matchResult;
@@ -231,7 +246,7 @@ public class IgnoreRules {
         //X TODO there are  possibly still a few matching rules missing!
         return false;
     }
-    
+
     /**
      * Check if the given file path matches the pattern. The pattern may contain
      * * wildcards.
@@ -241,9 +256,12 @@ public class IgnoreRules {
      * @param pattern the search pattern from the ignore configuration
      * @return <code>true</code> if the file matches the ignore pattern
      */
-    private boolean wildCardMatch(final String filePathToCheckFor, final String pattern) {
+    private boolean wildCardMatch(
+        final String filePathToCheckFor,
+        final String pattern
+    ) {
         String p = pattern.replace(".", "\\."); // escape all dots, since a . matches all chars in regexp
-        p = p.replace("*", ".*");  // escape a star with 'n chars' regexp 
+        p = p.replace("*", ".*"); // escape a star with 'n chars' regexp
         p += "/.*"; // add a delimiter, so paths may be matched correctly. /myPath/ != /myPathOther/
 
         String delimitedPath = filePathToCheckFor + "/";

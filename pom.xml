@@ -24,7 +24,7 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-	
+
     <developers>
         <developer>
             <name>Gregory Anne</name>
@@ -32,7 +32,7 @@
             <url>https://github.com/zg2pro</url>
         </developer>
     </developers>
-        
+
     <scm>
         <connection>scm:git:https://github.com/zg2pro/zg2pro-formatter-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:zg2pro/zg2pro-formatter-plugin.git</developerConnection>
@@ -42,6 +42,18 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>com.github.zg2pro.formatter</groupId>
+                <artifactId>zg2pro-formatter-plugin</artifactId>
+                <version>0.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>apply</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
@@ -64,9 +76,9 @@
             </plugin>
         </plugins>
     </build>
-    
+
     <dependencies>
-        
+
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
@@ -99,7 +111,7 @@
             <artifactId>editorconfig-linters</artifactId>
             <version>${version.org.ec4j.linters}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>io.takari.maven.plugins</groupId>
             <artifactId>takari-plugin-testing</artifactId>
@@ -128,7 +140,7 @@
             <url>https://repo.maven.apache.org/maven2/</url>
         </pluginRepository>
     </pluginRepositories>
-    
+
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
@@ -139,7 +151,7 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
     </distributionManagement>
-    
+
     <profiles>
         <profile>
             <id>sources-javadoc</id>

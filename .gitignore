@@ -25,3 +25,4 @@ target/
 .factorypath
 .project
 nb-configuration.xml
+.editorconfig
