@@ -42,6 +42,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
 
 /**
@@ -94,11 +95,14 @@ public class ForceFormatMojo extends AbstractMojo {
         String currentModulePom = project.getFile().toString();
         getLog().debug("currentModulePom:" + currentModulePom);
         Repository repo = null;
+        boolean runningOnGitRepo = projectBaseDir.toPath().resolve(".git").toFile().exists();
         try {
-            Git git = Git.open(projectBaseDir);
-            repo = git.getRepository();
-            getLog().info("executes git hook placement");
-            hookHandler.gitHookPluginExecution(repo);
+            if (runningOnGitRepo){
+                Git git = Git.open(projectBaseDir);
+                repo = git.getRepository();
+                getLog().info("executes git hook placement");
+                hookHandler.gitHookPluginExecution(repo);
+            }
         } catch (IOException ex) {
             throw new MojoExecutionException(
                     "could not open this folder with jgit",
@@ -108,7 +112,7 @@ public class ForceFormatMojo extends AbstractMojo {
         if (handleSkipOption()) {
             return;
         }
-        if (StringUtils.equals(rootDirectoryPom, currentModulePom)) {
+        if (runningOnGitRepo && StringUtils.equals(rootDirectoryPom, currentModulePom)) {
             getLog().info("handling multimodule root directory setup");
             try {
                 getLog().debug("editorconfig");
@@ -128,8 +132,10 @@ public class ForceFormatMojo extends AbstractMojo {
         getLog().info("executes prettier java");
         prettierHandler.prettify();
 
-        getLog().info("executes editorconfig");
-        editorconfigHandler.executeEditorConfigOnGitRepo(projectBaseDir, repo);
+        if (repo != null){
+            getLog().info("executes editorconfig");
+            editorconfigHandler.executeEditorConfigOnGitRepo(projectBaseDir, repo);
+        }
     }
 
 }
