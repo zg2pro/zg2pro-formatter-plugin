@@ -36,7 +36,8 @@ import org.apache.commons.io.FileUtils;
  * @author zg2pro
  */
 public class FileOverwriter extends AbstractFormatterService {
-    private static boolean isWindows = System
+    @Deprecated
+    private static final boolean isWindows = System
         .getProperty("os.name")
         .toLowerCase()
         .contains("win");

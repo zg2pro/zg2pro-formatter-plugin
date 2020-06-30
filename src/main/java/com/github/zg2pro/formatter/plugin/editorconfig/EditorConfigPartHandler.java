@@ -53,8 +53,8 @@ import org.slf4j.LoggerFactory;
  * @author zg2pro
  */
 public class EditorConfigPartHandler extends AbstractFormatterService {
-    private MavenProject project;
-    private FileOverwriter fileOverwriter;
+    private final MavenProject project;
+    private final FileOverwriter fileOverwriter;
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
 
@@ -151,10 +151,13 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         getLog().debug("filetype: " + type);
         boolean binary = true;
         if (type != null) {
-            for (String accepted : FILETYPES_ARE_XML.keySet()) {
-                if (type.startsWith(accepted)) {
-                    return false;
-                }
+            if (
+                !FILETYPES_ARE_XML
+                    .keySet()
+                    .stream()
+                    .noneMatch(accepted -> (type.startsWith(accepted)))
+            ) {
+                return false;
             }
         }
         return binary;
@@ -222,6 +225,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             if (resource.getPath().toFile().exists()) {
                 ViolationHandler.ReturnState state =
                     ViolationHandler.ReturnState.RECHECK;
+                int maxFourLoopsOnSameFile = 4;
                 while (state != ViolationHandler.ReturnState.FINISHED) {
                     handler.startFile(resource);
                     if (isXmlFile(resource.getPath().toFile())) {
@@ -239,6 +243,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                         handler
                     );
                     state = handler.endFile();
+                    maxFourLoopsOnSameFile--;
+                    if (maxFourLoopsOnSameFile < 1) {
+                        state = ViolationHandler.ReturnState.FINISHED;
+                    }
                 }
             }
         }

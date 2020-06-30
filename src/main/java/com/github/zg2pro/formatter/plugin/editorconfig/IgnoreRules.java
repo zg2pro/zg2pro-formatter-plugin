@@ -139,13 +139,12 @@ public class IgnoreRules {
                 try (
                     FileInputStream fis = new FileInputStream(gitignore) // ensure that the file gets closed!
                 ) {
-                    if (parseGitIgnore(fis, parseDir, toCheckFor)) {
+                    if (parseGitIgnore(fis, toCheckFor)) {
                         return true;
                     }
                 }
             }
         } while (!parseDir.getAbsoluteFile().equals(repoDir));
-
         return false;
     }
 
@@ -159,18 +158,14 @@ public class IgnoreRules {
      * @return <code>true</code> if the given path should be ignored
      * @throws IOException
      */
-    private boolean parseGitIgnore(
-        InputStream gitignore,
-        File currentDir,
-        File toCheckFor
-    )
+    private boolean parseGitIgnore(InputStream gitignore, File toCheckFor)
         throws IOException {
         BufferedReader br = new BufferedReader(
             new InputStreamReader(gitignore)
         );
         String line;
         while ((line = br.readLine()) != null) {
-            if (parseLine(line, currentDir, toCheckFor)) {
+            if (parseLine(line, toCheckFor)) {
                 return true;
             }
         }
@@ -205,7 +200,7 @@ public class IgnoreRules {
      * @param toCheckFor
      * @return <code>true</code> if the given path should be ignored
      */
-    private boolean parseLine(String line, File currentDir, File toCheckFor) {
+    private boolean parseLine(String line, File toCheckFor) {
         String pattern = line.trim();
 
         boolean matchResult = true;

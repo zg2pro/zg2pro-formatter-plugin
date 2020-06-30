@@ -38,24 +38,17 @@ import org.eclipse.jgit.lib.StoredConfig;
  * @author zg2pro
  */
 public class HookPartHandler {
-    private MavenProject project;
+    private final MavenProject project;
 
-    private MavenSession session;
-
-    private BuildPluginManager pluginManager;
-    private FileOverwriter fileOverwriter;
-    private boolean skip;
+    private final FileOverwriter fileOverwriter;
+    private final boolean skip;
 
     public HookPartHandler(
         MavenProject project,
-        MavenSession session,
-        BuildPluginManager pluginManager,
         FileOverwriter fileOverwriter,
         boolean skip
     ) {
         this.project = project;
-        this.session = session;
-        this.pluginManager = pluginManager;
         this.fileOverwriter = fileOverwriter;
         this.skip = skip;
     }

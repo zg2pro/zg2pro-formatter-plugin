@@ -41,7 +41,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
 
 /**
@@ -68,14 +67,7 @@ public class ForceFormatMojo extends AbstractMojo {
 
     private void initServices() {
         fileOverwriter = new FileOverwriter();
-        hookHandler =
-            new HookPartHandler(
-                project,
-                session,
-                pluginManager,
-                fileOverwriter,
-                skip
-            );
+        hookHandler = new HookPartHandler(project, fileOverwriter, skip);
         prettierHandler =
             new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler =

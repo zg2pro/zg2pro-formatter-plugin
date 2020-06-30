@@ -43,11 +43,11 @@ import org.apache.maven.project.MavenProject;
  * @author zg2pro
  */
 public class PrettierPartHandler {
-    private MavenProject project;
+    private final MavenProject project;
 
-    private MavenSession session;
+    private final MavenSession session;
 
-    private BuildPluginManager pluginManager;
+    private final BuildPluginManager pluginManager;
 
     public PrettierPartHandler(
         MavenProject project,
