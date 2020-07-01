@@ -23,18 +23,13 @@
  */
 package com.github.zg2pro.formatter.plugin;
 
-import static java.util.Collections.singleton;
-
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 import java.io.File;
-import java.io.IOException;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,70 +40,30 @@ import org.junit.runner.RunWith;
  */
 @RunWith(MavenJUnitTestRunner.class)
 @MavenVersions({ "3.6.3" })
-public class ForceFormatTest {
+public class ForceFormatIT {
     @Rule
     public final TestResources resources = new TestResources(
-        "target/test-classes/projects",
-        "target/test-classes/transformed-projects"
+        "D:\\workspace\\test\\",
+        "D:\\workspace\\tmp\\"
     );
 
     public final MavenRuntime verifier;
 
-    public ForceFormatTest(MavenRuntimeBuilder runtimeBuilder)
-        throws Exception {
+    public ForceFormatIT(MavenRuntimeBuilder runtimeBuilder) throws Exception {
         this.verifier = runtimeBuilder.build(); //.withCliOptions(opts) // //
     }
 
     @Test
-    public void checkSpringMvcKeynectis() throws Exception {
-        testPluginByGithubZg2proProject(
-            "springmvc-ejb-keynectis",
-            "before-formats"
-        );
-    }
-
-    @Test
-    public void checkSnail() throws Exception {
-        testPluginByGithubZg2proProject("snail", "master");
-    }
-
-    @Test
     public void checkSpringDataExamples() throws Exception {
-        testPluginByGithubZg2proProject("spring-data-examples", "master");
-    }
-
-    private void testPluginByGithubZg2proProject(
-        String projectName,
-        String branchName
-    )
-        throws GitAPIException, IOException, Exception {
-        File projectDir = new File(
-            "target/test-classes/projects/" + projectName
-        );
-        if (projectDir.exists()) {
-            FileUtils.cleanDirectory(projectDir);
-            projectDir.delete();
-        }
-        File projectDirTransformed = new File(
-            "target/test-classes/transformed-projects/" + projectName
-        );
+        File projectDir = new File("D:\\workspace\\test\\projet");
+        File projectDirTransformed = new File("D:\\workspace\\tmp\\projet");
         if (projectDirTransformed.exists()) {
             FileUtils.cleanDirectory(projectDirTransformed);
             projectDirTransformed.delete();
         }
 
-        Git
-            .cloneRepository()
-            .setURI("https://github.com/zg2pro/" + projectName + ".git")
-            .setDirectory(projectDir)
-            .setBranchesToClone(singleton("refs/heads/" + branchName))
-            .setBranch("refs/heads/" + branchName)
-            .call();
-
-        File projDir = resources.getBasedir(projectName);
-
         verifier
-            .forProject(projDir) //
+            .forProject(projectDir) //
             .withCliOption("-X") // debug
             .withCliOption("-B")
             .execute("clean", "compile")

@@ -51,10 +51,10 @@ public class ForceFormatMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", property = "zg2pro.format.skip")
     private boolean skip;
 
-    @Component
+    @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
-    @Component
+    @Parameter(defaultValue = "${session}", readonly = true)
     public MavenSession session;
 
     @Component

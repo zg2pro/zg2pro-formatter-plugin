@@ -93,7 +93,10 @@ public class IgnoreRules {
             throw new IllegalArgumentException("file to check object is null!");
         }
         boolean result =
-            toCheckFor.getParentFile().equals(db.getWorkTree()) &&
+            toCheckFor
+                .getParentFile()
+                .toString()
+                .contains(db.getWorkTree().getAbsolutePath()) &&
             checkGitignoreFiles(toCheckFor);
 
         //X TODO check .git/info/excludes
