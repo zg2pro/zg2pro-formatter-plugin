@@ -24,6 +24,7 @@
 package com.github.zg2pro.formatter.plugin;
 
 import com.github.zg2pro.formatter.plugin.editorconfig.EditorConfigPartHandler;
+import com.github.zg2pro.formatter.plugin.groovy.GroovyPartHandler;
 import com.github.zg2pro.formatter.plugin.hook.HookPartHandler;
 import com.github.zg2pro.formatter.plugin.prettier.PrettierPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
@@ -35,11 +36,14 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 
@@ -60,10 +64,24 @@ public class ForceFormatMojo extends AbstractMojo {
     @Component
     public BuildPluginManager pluginManager;
 
+    @Parameter(
+        defaultValue = "${repositorySystemSession}",
+        required = true,
+        readonly = true
+    )
+    private RepositorySystemSession repositorySystemSession;
+
+    @Component
+    private PluginDescriptor pluginDescriptor;
+
+    @Component
+    private RepositorySystem repositorySystem;
+
     private HookPartHandler hookHandler;
     private PrettierPartHandler prettierHandler;
     private EditorConfigPartHandler editorconfigHandler;
     private FileOverwriter fileOverwriter;
+    private GroovyPartHandler groovyHandler;
 
     private void initServices() {
         fileOverwriter = new FileOverwriter();
@@ -72,6 +90,13 @@ public class ForceFormatMojo extends AbstractMojo {
             new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler =
             new EditorConfigPartHandler(project, fileOverwriter);
+        groovyHandler =
+            new GroovyPartHandler(
+                pluginDescriptor,
+                project,
+                repositorySystemSession,
+                repositorySystem
+            );
     }
 
     private boolean handleSkipOption() throws MojoExecutionException {
