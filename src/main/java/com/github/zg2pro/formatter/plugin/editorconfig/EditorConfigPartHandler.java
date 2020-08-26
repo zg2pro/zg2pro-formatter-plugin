@@ -23,8 +23,6 @@
  */
 package com.github.zg2pro.formatter.plugin.editorconfig;
 
-import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
-import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -33,8 +31,13 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
+import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.apache.tika.Tika;
 import org.ec4j.core.Cache;
 import org.ec4j.core.Resource;
 import org.ec4j.core.ResourceProperties;
@@ -57,6 +60,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     private final FileOverwriter fileOverwriter;
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
+    private final Tika tika = new Tika();
 
     public EditorConfigPartHandler(
         MavenProject project,
@@ -147,7 +151,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     }
 
     private boolean isBinaryFile(File f) throws IOException {
-        String type = Files.probeContentType(f.toPath());
+        String type = tika.detect(f);
         getLog().debug("filetype: " + type);
         boolean binary = true;
         if (type != null) {
