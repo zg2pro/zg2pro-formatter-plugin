@@ -23,6 +23,8 @@
  */
 package com.github.zg2pro.formatter.plugin.editorconfig;
 
+import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
+import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -31,10 +33,6 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
-import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.tika.Tika;
