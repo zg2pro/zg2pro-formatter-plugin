@@ -166,7 +166,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     }
 
     private boolean isXmlFile(File f) throws IOException {
-        String type = Files.probeContentType(f.toPath());
+        String type = tika.detect(f);
         boolean isXml = false;
         if (type != null) {
             for (Map.Entry<String, Boolean> accepted : FILETYPES_ARE_XML.entrySet()) {
