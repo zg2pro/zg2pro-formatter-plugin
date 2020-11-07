@@ -58,11 +58,6 @@ import org.eclipse.aether.resolution.ArtifactResult;
 public class GroovyPartHandler extends AbstractFormatterService {
     private PluginDescriptor pluginDescriptor;
     private MavenProject project;
-    //    @Parameter(
-    //      defaultValue = "${repositorySystemSession}",
-    //      required = true,
-    //      readonly = true
-    //  )
     private RepositorySystemSession repositorySystemSession;
     private RepositorySystem repositorySystem;
 
@@ -90,6 +85,13 @@ public class GroovyPartHandler extends AbstractFormatterService {
         installGroovyFormatterCmd.add(toString(npmExec));
         installGroovyFormatterCmd.add("install");
         installGroovyFormatterCmd.add("-g");
+        installGroovyFormatterCmd.add("npm-groovy-lint");
+        try {
+            executeCommand(installGroovyFormatterCmd);
+        } catch (IOException ex) {
+            throw new MojoExecutionException("could not execute command", ex);
+        }
+        installGroovyFormatterCmd = new ArrayList<>();
         installGroovyFormatterCmd.add("npm-groovy-lint");
         try {
             executeCommand(installGroovyFormatterCmd);

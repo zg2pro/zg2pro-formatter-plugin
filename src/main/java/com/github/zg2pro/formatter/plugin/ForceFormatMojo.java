@@ -166,6 +166,7 @@ public class ForceFormatMojo extends AbstractMojo {
         }
         getLog().info("executes prettier java");
         prettierHandler.prettify();
+        groovyHandler.prettify();
 
         if (repo != null) {
             getLog().info("executes editorconfig");
