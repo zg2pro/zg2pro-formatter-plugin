@@ -26,11 +26,8 @@ package com.github.zg2pro.formatter.plugin.groovy;
 import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.NODE_VERSION;
 
 import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -40,6 +37,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
@@ -74,111 +74,65 @@ public class GroovyPartHandler extends AbstractFormatterService {
     }
 
     public void prettify() throws MojoExecutionException {
-        Path nodeExecutable = resolveNodeExecutable();
+        File nodeExecutable = resolveNodeExecutable().toFile();
+
         String npmExecutable = OperatingSystemFamily.WINDOWS.equals(
                 determineOperatingSystemFamily()
             )
             ? "npm.cmd"
             : "npm";
-        Path npmExec = nodeExecutable.getParent().resolve(npmExecutable);
-        List<String> installGroovyFormatterCmd = new ArrayList<>();
-        installGroovyFormatterCmd.add(toString(npmExec));
-        installGroovyFormatterCmd.add("install");
-        installGroovyFormatterCmd.add("-g");
-        installGroovyFormatterCmd.add("npm-groovy-lint");
-        try {
-            executeCommand(installGroovyFormatterCmd);
-        } catch (IOException ex) {
-            throw new MojoExecutionException("could not execute command", ex);
+        Path npmExec = nodeExecutable
+            .toPath()
+            .getParent()
+            .resolve("node")
+            .resolve(npmExecutable);
+
+        String groovyLintExecutable = OperatingSystemFamily.WINDOWS.equals(
+                determineOperatingSystemFamily()
+            )
+            ? "npm-groovy-lint.cmd"
+            : "npm-groovy-lint";
+        Path groovyLintExec = npmExec.getParent().resolve(groovyLintExecutable);
+
+        if (!npmExec.toFile().exists()) {
+            ZipFile zf = new ZipFile(nodeExecutable);
+            try {
+                zf.extractAll(nodeExecutable.getParent());
+            } catch (ZipException ex) {
+                throw new MojoExecutionException("couldnt extract node", ex);
+            }
         }
-        installGroovyFormatterCmd = new ArrayList<>();
-        installGroovyFormatterCmd.add("npm-groovy-lint");
+
+        List<String> installGroovyFormatterCmd = new ArrayList<>();
+        installGroovyFormatterCmd.add(
+            groovyLintExec.toFile().getAbsolutePath()
+        );
+        installGroovyFormatterCmd.add("--fix");
         try {
             executeCommand(installGroovyFormatterCmd);
-        } catch (IOException ex) {
+        } catch (IOException | InterruptedException ex) {
             throw new MojoExecutionException("could not execute command", ex);
         }
     }
 
     private void executeCommand(List<String> command)
-        throws IOException, MojoExecutionException {
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Running " + command);
+        throws InterruptedException, IOException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+        Process process = pb.start();
+        int returnCode = process.waitFor();
+        if (process.isAlive()) {
+            process.destroy();
         }
-
-        Process process = new ProcessBuilder(command.toArray(new String[0]))
-            .directory(project.getBasedir())
-            .start();
-        try (
-            InputStreamReader stdoutReader = new InputStreamReader(
-                process.getInputStream(),
-                StandardCharsets.UTF_8
-            );
-            BufferedReader stdout = new BufferedReader(stdoutReader);
-            InputStreamReader stderrReader = new InputStreamReader(
-                process.getErrorStream(),
-                StandardCharsets.UTF_8
-            );
-            BufferedReader stderr = new BufferedReader(stderrReader)
-        ) {
-            String line;
-            while ((line = stdout.readLine()) != null) {
-                handlePrettierLogLine(line);
-            }
-
-            boolean noMatchingFiles = false;
-            while ((line = stderr.readLine()) != null) {
-                if (line.contains("No matching files.")) {
-                    noMatchingFiles = true;
-                } else if (line.contains("error")) {
-                    getLog().error(line);
-                } else {
-                    getLog().warn(line);
-                }
-            }
-
-            int status = process.waitFor();
-            if (status != 0) {
-                if (status == 2 && noMatchingFiles) {
-                    getLog().info("No files found matching glob ");
-                } else {
-                    handlePrettierNonZeroExit(status);
-                }
-            }
-        } catch (IOException | InterruptedException e) {
-            throw new MojoExecutionException("Error trying to run command", e);
-        }
-    }
-
-    private void handlePrettierLogLine(String line) {
-        // colorized lines have no changes
-        if (line.endsWith("ms") && !COLORIZED_LINE.test(line)) {
-            getLog().info("Reformatted file: " + line);
-        }
-    }
-
-    private void handlePrettierNonZeroExit(int status)
-        throws MojoExecutionException {
-        throw new MojoExecutionException(
-            "Error trying to format code with prettier-java: " + status
-        );
-    }
-
-    private static final Predicate<String> COLORIZED_LINE = Pattern
-        .compile("(\\x9B|\\x1B\\[)[0-?]*[ -/]*[@-~]")
-        .asPredicate();
-
-    // Convert Windows Path to Unix style
-    private String toString(Path path) {
-        return path.toString().replace("\\", "/");
     }
 
     protected Path resolveNodeExecutable() throws MojoExecutionException {
         Artifact nodeArtifact = new DefaultArtifact(
             pluginDescriptor.getGroupId(),
             pluginDescriptor.getArtifactId(),
-            determineNodeClassifier(),
-            "exe",
+            "node-12.16-npm-6.14",
+            "zip",
             pluginDescriptor.getVersion()
         );
 
@@ -198,11 +152,6 @@ public class GroovyPartHandler extends AbstractFormatterService {
         }
 
         return nodeExecutable.toPath();
-    }
-
-    private String determineNodeClassifier() throws MojoExecutionException {
-        OperatingSystemFamily osFamily = determineOperatingSystemFamily();
-        return "node-" + NODE_VERSION + "-" + osFamily.getShortName();
     }
 
     private OperatingSystemFamily determineOperatingSystemFamily()

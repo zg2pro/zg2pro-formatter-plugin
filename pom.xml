@@ -74,6 +74,30 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-node</id>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>src/main/binaries/node-12.16-npm-6.14.zip</file>
+                                    <type>zip</type>
+                                    <classifier>node-12.16-npm-6.14</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -110,6 +134,11 @@
             <groupId>org.ec4j.linters</groupId>
             <artifactId>editorconfig-linters</artifactId>
             <version>${version.org.ec4j.linters}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>2.6.4</version>
         </dependency>
 
         <dependency>
