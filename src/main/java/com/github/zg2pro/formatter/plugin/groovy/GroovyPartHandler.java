@@ -35,11 +35,9 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
@@ -76,52 +74,53 @@ public class GroovyPartHandler extends AbstractFormatterService {
     public void prettify() throws MojoExecutionException {
         File nodeExecutable = resolveNodeExecutable().toFile();
 
-        String npmExecutable = OperatingSystemFamily.WINDOWS.equals(
-                determineOperatingSystemFamily()
-            )
-            ? "npm.cmd"
-            : "npm";
-        Path npmExec = nodeExecutable
-            .toPath()
-            .getParent()
-            .resolve("node")
-            .resolve(npmExecutable);
-
         String groovyLintExecutable = OperatingSystemFamily.WINDOWS.equals(
                 determineOperatingSystemFamily()
             )
             ? "npm-groovy-lint.cmd"
             : "npm-groovy-lint";
-        Path groovyLintExec = npmExec.getParent().resolve(groovyLintExecutable);
+        Path groovyLintExec = nodeExecutable
+            .toPath()
+            .getParent()
+            .resolve("node")
+            .resolve(groovyLintExecutable);
 
-        if (!npmExec.toFile().exists()) {
+        if (!groovyLintExec.toFile().exists()) {
             ZipFile zf = new ZipFile(nodeExecutable);
             try {
                 zf.extractAll(nodeExecutable.getParent());
             } catch (ZipException ex) {
                 throw new MojoExecutionException("couldnt extract node", ex);
             }
-        }
-
-        List<String> installGroovyFormatterCmd = new ArrayList<>();
-        installGroovyFormatterCmd.add(
-            groovyLintExec.toFile().getAbsolutePath()
-        );
-        installGroovyFormatterCmd.add("--fix");
-        try {
-            executeCommand(installGroovyFormatterCmd);
-        } catch (IOException | InterruptedException ex) {
-            throw new MojoExecutionException("could not execute command", ex);
+        } else {
+            //cant format the first time as it generates a file lock issue
+            List<String> installGroovyFormatterCmd = new ArrayList<>();
+            installGroovyFormatterCmd.add(
+                groovyLintExec
+                    .toFile()
+                    .getAbsolutePath()
+                    .replaceAll("\\\\", "/")
+            );
+            installGroovyFormatterCmd.add("--fix");
+            try {
+                executeCommand(installGroovyFormatterCmd);
+            } catch (IOException | InterruptedException ex) {
+                throw new MojoExecutionException(
+                    "could not execute command",
+                    ex
+                );
+            }
         }
     }
 
     private void executeCommand(List<String> command)
         throws InterruptedException, IOException {
+        System.out.println(ArrayUtils.toString(command.toArray()));
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
         Process process = pb.start();
-        int returnCode = process.waitFor();
+        process.waitFor();
         if (process.isAlive()) {
             process.destroy();
         }
@@ -131,7 +130,7 @@ public class GroovyPartHandler extends AbstractFormatterService {
         Artifact nodeArtifact = new DefaultArtifact(
             pluginDescriptor.getGroupId(),
             pluginDescriptor.getArtifactId(),
-            "node-12.16-npm-6.14",
+            "node-12.16",
             "zip",
             pluginDescriptor.getVersion()
         );
