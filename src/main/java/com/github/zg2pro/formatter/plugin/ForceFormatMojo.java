@@ -55,6 +55,12 @@ public class ForceFormatMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", property = "zg2pro.format.skip")
     private boolean skip;
 
+    @Parameter(
+        defaultValue = "false",
+        property = "zg2pro.format.allow.modifications.on.editorconfig"
+    )
+    private boolean allowModificationsOnEditorconfig;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
@@ -147,8 +153,10 @@ public class ForceFormatMojo extends AbstractMojo {
         ) {
             getLog().info("handling multimodule root directory setup");
             try {
-                getLog().debug("editorconfig");
-                editorconfigHandler.overwriteEditorconfig();
+                if (!allowModificationsOnEditorconfig) {
+                    getLog().debug("editorconfig");
+                    editorconfigHandler.overwriteEditorconfig();
+                }
                 getLog().debug("pre-commit");
                 hookHandler.overwriteCommitHook();
             } catch (IOException e) {
