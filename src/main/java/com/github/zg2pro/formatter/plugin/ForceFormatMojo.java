@@ -27,6 +27,7 @@ import com.github.zg2pro.formatter.plugin.editorconfig.EditorConfigPartHandler;
 import com.github.zg2pro.formatter.plugin.groovy.GroovyPartHandler;
 import com.github.zg2pro.formatter.plugin.hook.HookPartHandler;
 import com.github.zg2pro.formatter.plugin.prettier.PrettierPartHandler;
+import com.github.zg2pro.formatter.plugin.scala.ScalaPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
@@ -85,6 +86,7 @@ public class ForceFormatMojo extends AbstractMojo {
 
     private HookPartHandler hookHandler;
     private PrettierPartHandler prettierHandler;
+    private ScalaPartHandler scalaHandler;
     private EditorConfigPartHandler editorconfigHandler;
     private FileOverwriter fileOverwriter;
     private GroovyPartHandler groovyHandler;
@@ -103,6 +105,7 @@ public class ForceFormatMojo extends AbstractMojo {
                 repositorySystemSession,
                 repositorySystem
             );
+        scalaHandler = new ScalaPartHandler(project, session, pluginManager);
     }
 
     private boolean handleSkipOption() throws MojoExecutionException {
@@ -174,6 +177,8 @@ public class ForceFormatMojo extends AbstractMojo {
         }
         getLog().info("executes prettier java");
         prettierHandler.prettify();
+        getLog().info("executes prettier scala");
+        scalaHandler.prettify();
         getLog().info("executes prettier groovy");
         groovyHandler.prettify();
 
