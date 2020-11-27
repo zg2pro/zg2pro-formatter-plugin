@@ -106,8 +106,8 @@ public abstract class ForceFormatMojo extends AbstractMojo {
         return skip;
     }
 
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute(boolean overwriteEditorConfigFileInRepo)
+        throws MojoExecutionException, MojoFailureException {
         initServices();
         String rootDirectory = session.getExecutionRootDirectory();
         String rootDirectoryPom =
@@ -144,8 +144,10 @@ public abstract class ForceFormatMojo extends AbstractMojo {
         ) {
             getLog().info("handling multimodule root directory setup");
             try {
-                getLog().debug("editorconfig");
-                editorconfigHandler.overwriteEditorconfig();
+                if (overwriteEditorConfigFileInRepo) {
+                    getLog().debug("editorconfig");
+                    editorconfigHandler.overwriteEditorconfig();
+                }
                 getLog().debug("pre-commit");
                 hookHandler.overwriteCommitHook();
             } catch (IOException e) {

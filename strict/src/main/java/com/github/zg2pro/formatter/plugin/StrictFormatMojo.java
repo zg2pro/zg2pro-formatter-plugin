@@ -23,6 +23,8 @@
  */
 package com.github.zg2pro.formatter.plugin;
 
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
@@ -31,4 +33,10 @@ import org.apache.maven.plugins.annotations.Mojo;
  * @author zg2pro
  */
 @Mojo(defaultPhase = LifecyclePhase.VALIDATE, name = "apply", threadSafe = true)
-public class StrictFormatMojo extends ForceFormatMojo {}
+public class StrictFormatMojo extends ForceFormatMojo {
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        super.execute(true);
+    }
+}
