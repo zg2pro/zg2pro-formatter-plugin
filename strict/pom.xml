@@ -1,18 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
-	<parent>
-		 <groupId>com.github.zg2pro.formatter</groupId>
-		<version>0.8-SNAPSHOT</version>
-		<artifactId>zg2pro-formatter-plugin-pom</artifactId>
-	</parent>
-	<artifactId>zg2pro-formatter-plugin</artifactId>
-    
-	<packaging>maven-plugin</packaging>
-	
+
+    <parent>
+        <groupId>com.github.zg2pro.formatter</groupId>
+        <version>0.8-SNAPSHOT</version>
+        <artifactId>zg2pro-formatter-plugin-pom</artifactId>
+    </parent>
+    <artifactId>zg2pro-formatter-plugin</artifactId>
+
+    <packaging>maven-plugin</packaging>
+
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-node</id>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>src/main/binaries/node-12.16.zip</file>
+                                    <type>zip</type>
+                                    <classifier>node-12.16</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
@@ -72,6 +95,13 @@
             <artifactId>editorconfig-linters</artifactId>
             <version>${version.org.ec4j.linters}</version>
         </dependency>
+
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+
         <dependency>
             <groupId>io.takari.maven.plugins</groupId>
             <artifactId>takari-plugin-testing</artifactId>
@@ -87,6 +117,6 @@
         </dependency>
     </dependencies>
 
-    
+
 
 </project>

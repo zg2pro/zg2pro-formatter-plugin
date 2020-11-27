@@ -17,9 +17,9 @@
     <name>zg2pro-formatter-plugin-pom</name>
     <description>This maven plugin enabled strong rules for formatting your java project, without relying on the IDEs formatting features</description>
 
-	<modules>
-		<module>strict</module>
-	</modules>
+    <modules>
+        <module>strict</module>
+    </modules>
 
     <licenses>
         <license>
@@ -58,6 +58,7 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 
