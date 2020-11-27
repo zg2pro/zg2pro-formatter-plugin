@@ -16,25 +16,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-node</id>
-                        <goals>
-                            <goal>attach-artifact</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <artifacts>
-                                <artifact>
-                                    <file>src/main/binaries/node-12.16.zip</file>
-                                    <type>zip</type>
-                                    <classifier>node-12.16</classifier>
-                                </artifact>
-                            </artifacts>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -61,47 +42,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <version>1.24.1</version>
+            <groupId>com.github.zg2pro.formatter</groupId>
+            <version>0.8-SNAPSHOT</version>
+            <artifactId>zg2pro-formatter-plugin-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>3.6.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.plugin-tools</groupId>
-            <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.6.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.twdata.maven</groupId>
-            <artifactId>mojo-executor</artifactId>
-            <version>2.3.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jgit</groupId>
-            <artifactId>org.eclipse.jgit</artifactId>
-            <version>5.7.0.202003110725-r</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ec4j.linters</groupId>
-            <artifactId>editorconfig-lint-api</artifactId>
-            <version>${version.org.ec4j.linters}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ec4j.linters</groupId>
-            <artifactId>editorconfig-linters</artifactId>
-            <version>${version.org.ec4j.linters}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.lingala.zip4j</groupId>
-            <artifactId>zip4j</artifactId>
-            <version>2.2.1</version>
-        </dependency>
-
         <dependency>
             <groupId>io.takari.maven.plugins</groupId>
             <artifactId>takari-plugin-testing</artifactId>
@@ -116,7 +60,5 @@
             <version>2.9.2</version>
         </dependency>
     </dependencies>
-
-
 
 </project>
