@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.apache.tika.Tika;
 import org.ec4j.core.Cache;
 import org.ec4j.core.Resource;
 import org.ec4j.core.ResourceProperties;
@@ -57,6 +58,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     private final FileOverwriter fileOverwriter;
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
+    private final Tika tika = new Tika();
 
     public EditorConfigPartHandler(
         MavenProject project,
@@ -147,7 +149,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     }
 
     private boolean isBinaryFile(File f) throws IOException {
-        String type = Files.probeContentType(f.toPath());
+        String type = tika.detect(f);
         getLog().debug("filetype: " + type);
         boolean binary = true;
         if (type != null) {
@@ -164,7 +166,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     }
 
     private boolean isXmlFile(File f) throws IOException {
-        String type = Files.probeContentType(f.toPath());
+        String type = tika.detect(f);
         boolean isXml = false;
         if (type != null) {
             for (Map.Entry<String, Boolean> accepted : FILETYPES_ARE_XML.entrySet()) {
