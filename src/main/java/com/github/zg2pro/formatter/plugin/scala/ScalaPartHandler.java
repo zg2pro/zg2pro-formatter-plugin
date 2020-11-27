@@ -67,6 +67,7 @@ public class ScalaPartHandler {
         element(name("scalafmt"), ""),
         element(
             name("includes"),
+            element(name("include"), "src/main/scala/**/*.scala"),
             element(name("include"), "src/test/scala/**/*.scala")
         )
     );
