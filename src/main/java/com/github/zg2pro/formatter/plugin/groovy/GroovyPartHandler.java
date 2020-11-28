@@ -35,6 +35,8 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.lang3.ArrayUtils;
@@ -53,7 +55,9 @@ import org.eclipse.aether.resolution.ArtifactResult;
  *
  * @author zg2pro
  */
-public class GroovyPartHandler extends AbstractFormatterService {
+public class GroovyPartHandler
+    extends AbstractFormatterService
+    implements Runnable {
     private PluginDescriptor pluginDescriptor;
     private MavenProject project;
     private RepositorySystemSession repositorySystemSession;
@@ -170,6 +174,15 @@ public class GroovyPartHandler extends AbstractFormatterService {
             return OperatingSystemFamily.WINDOWS;
         } else {
             throw new MojoExecutionException("Unknown os.name " + osFullName);
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            prettify();
+        } catch (MojoExecutionException ex) {
+            throw new IllegalStateException(ex);
         }
     }
 

@@ -175,12 +175,17 @@ public class ForceFormatMojo extends AbstractMojo {
                 );
             editorconfigHandler.cleanEditorconfigsInSubmodules();
         }
+
+        getLog().info("executes prettier groovy");
+        //FIXME: starts CodeNarc server and fails... sometimes... (windows lock seems hanging sometimes)
+        //        Thread thread = new Thread(groovyHandler);
+        //        thread.start();
+
         getLog().info("executes prettier java");
         prettierHandler.prettify();
         getLog().info("executes prettier scala");
-        scalaHandler.prettify();
-        getLog().info("executes prettier groovy");
-        groovyHandler.prettify();
+        //FIXME
+        //scalaHandler.prettify();
 
         if (repo != null) {
             getLog().info("executes editorconfig");
