@@ -44,7 +44,7 @@ public class ForceFormatIT {
     @Rule
     public final TestResources resources = new TestResources(
         "D:\\workspace\\test\\",
-        "D:\\workspace\\tmp\\"
+        "D:\\workspace\\test2\\"
     );
 
     public final MavenRuntime verifier;
@@ -55,8 +55,8 @@ public class ForceFormatIT {
 
     @Test
     public void checkSpringDataExamples() throws Exception {
-        File projectDir = new File("D:\\workspace\\test\\projet");
-        File projectDirTransformed = new File("D:\\workspace\\tmp\\projet");
+        File projectDir = new File("D:\\workspace\\test\\project");
+        File projectDirTransformed = new File("D:\\workspace\\test2\\project");
         if (projectDirTransformed.exists()) {
             FileUtils.cleanDirectory(projectDirTransformed);
             projectDirTransformed.delete();
