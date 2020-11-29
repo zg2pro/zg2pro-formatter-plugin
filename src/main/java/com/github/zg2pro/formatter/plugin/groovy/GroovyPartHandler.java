@@ -104,6 +104,7 @@ public class GroovyPartHandler
                     .replaceAll("\\\\", "/")
             );
             installGroovyFormatterCmd.add("--fix");
+            installGroovyFormatterCmd.add("||true");
             try {
                 executeCommand(installGroovyFormatterCmd);
             } catch (IOException | InterruptedException ex) {

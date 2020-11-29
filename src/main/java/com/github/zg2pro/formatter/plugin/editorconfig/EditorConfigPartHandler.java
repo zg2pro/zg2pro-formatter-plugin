@@ -24,7 +24,6 @@
 package com.github.zg2pro.formatter.plugin.editorconfig;
 
 import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
-import com.github.zg2pro.formatter.plugin.groovy.GroovyLinter;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +57,6 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     private final FileOverwriter fileOverwriter;
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
-    private final Linter groovyLinter = new GroovyLinter();
     private final Tika tika = new Tika();
 
     public EditorConfigPartHandler(
@@ -179,14 +177,6 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         return isXml;
     }
 
-    private boolean isGroovyFile(File f) throws IOException {
-        String type = tika.detect(f);
-        return (
-            type.contains("groovy") ||
-            f.getName().toLowerCase().startsWith("jenkinsfile")
-        );
-    }
-
     private void handleFile(
         File f,
         IgnoreRules ir,
@@ -242,13 +232,6 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                     if (isXmlFile(resource.getPath().toFile())) {
                         getLog().debug("linting file as xml");
                         xmlLinter.process(
-                            resource,
-                            editorConfigProperties,
-                            handler
-                        );
-                    } else if (isGroovyFile(resource.getPath().toFile())) {
-                        getLog().debug("linting file as groovy");
-                        groovyLinter.process(
                             resource,
                             editorConfigProperties,
                             handler

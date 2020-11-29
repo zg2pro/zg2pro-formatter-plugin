@@ -31,6 +31,12 @@ import com.github.zg2pro.formatter.plugin.scala.ScalaPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -179,7 +185,24 @@ public class ForceFormatMojo extends AbstractMojo {
         getLog().info("executes prettier groovy");
         //FIXME: starts CodeNarc server and fails... sometimes... (windows lock seems hanging sometimes)
         // Thread thread = new Thread(groovyHandler);
-        // thread.start();
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future f = executor.submit(groovyHandler);
+        try {
+            f.get(50, TimeUnit.SECONDS);
+            getLog().debug("groovy formatter completed its execution");
+        } catch (TimeoutException e) {
+            getLog().debug("timeout for groovy formatter");
+            f.cancel(true);
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new IllegalStateException(ex);
+        }
+
+        //        Timer timer = new Timer();
+        //timer.schedule(new TimeoutTask(t, timer), 30*1000);
+        //        TimeoutTask tt = new TimeoutTask(thread, thread);
+
+        //      thread.start();
 
         getLog().info("executes prettier java");
         prettierHandler.prettify();
@@ -187,7 +210,7 @@ public class ForceFormatMojo extends AbstractMojo {
         //FIXME
         //scalaHandler.prettify();
 
-        // thread.interrupt();
+        //        thread.interrupt();
 
         if (repo != null) {
             getLog().info("executes editorconfig");
