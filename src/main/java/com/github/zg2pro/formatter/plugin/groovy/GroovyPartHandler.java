@@ -28,6 +28,10 @@ import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.NODE_
 import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -95,18 +99,37 @@ public class GroovyPartHandler
                 throw new MojoExecutionException("couldnt extract node", ex);
             }
         } else {
-            //cant format the first time as it generates a file lock issue
-            List<String> installGroovyFormatterCmd = new ArrayList<>();
-            installGroovyFormatterCmd.add(
-                groovyLintExec
-                    .toFile()
-                    .getAbsolutePath()
-                    .replaceAll("\\\\", "/")
-            );
-            installGroovyFormatterCmd.add("--fix");
-            installGroovyFormatterCmd.add("||true");
             try {
-                executeCommand(installGroovyFormatterCmd);
+                FileChannel channel = new RandomAccessFile(
+                    groovyLintExec.toFile(),
+                    "rw"
+                )
+                .getChannel();
+                // Get an exclusive lock on the whole file
+                FileLock lock = channel.lock();
+                try {
+                    lock = channel.tryLock();
+                    // Ok. You get the lock
+                    //cant format the first time as it generates a file lock issue
+                    List<String> installGroovyFormatterCmd = new ArrayList<>();
+                    installGroovyFormatterCmd.add(
+                        groovyLintExec
+                            .toFile()
+                            .getAbsolutePath()
+                            .replaceAll("\\\\", "/")
+                    );
+                    installGroovyFormatterCmd.add("--fix");
+                    installGroovyFormatterCmd.add("||true");
+                    executeCommand(installGroovyFormatterCmd);
+                } catch (OverlappingFileLockException e) {
+                    // File is open by someone else
+                    getLog()
+                        .debug(
+                            "couldnt execute the formatter as the linter app is locked by another process"
+                        );
+                } finally {
+                    lock.release();
+                }
             } catch (IOException | InterruptedException ex) {
                 throw new MojoExecutionException(
                     "could not execute command",

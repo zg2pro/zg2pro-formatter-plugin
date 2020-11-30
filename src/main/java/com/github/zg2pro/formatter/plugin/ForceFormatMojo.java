@@ -183,9 +183,6 @@ public class ForceFormatMojo extends AbstractMojo {
         }
 
         getLog().info("executes prettier groovy");
-        //FIXME: starts CodeNarc server and fails... sometimes... (windows lock seems hanging sometimes)
-        // Thread thread = new Thread(groovyHandler);
-
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future f = executor.submit(groovyHandler);
         try {
@@ -198,19 +195,11 @@ public class ForceFormatMojo extends AbstractMojo {
             throw new IllegalStateException(ex);
         }
 
-        //        Timer timer = new Timer();
-        //timer.schedule(new TimeoutTask(t, timer), 30*1000);
-        //        TimeoutTask tt = new TimeoutTask(thread, thread);
-
-        //      thread.start();
-
         getLog().info("executes prettier java");
         prettierHandler.prettify();
         getLog().info("executes prettier scala");
         //FIXME
         //scalaHandler.prettify();
-
-        //        thread.interrupt();
 
         if (repo != null) {
             getLog().info("executes editorconfig");
