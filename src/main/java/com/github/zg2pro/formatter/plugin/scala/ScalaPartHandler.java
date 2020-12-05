@@ -62,7 +62,7 @@ public class ScalaPartHandler {
         this.pluginManager = pluginManager;
     }
 
-    private static MojoExecutor.Element scalaConfigElement = element(
+    private static final MojoExecutor.Element scalaConfigElement = element(
         name("scala"),
         element(name("scalafmt"), ""),
         element(

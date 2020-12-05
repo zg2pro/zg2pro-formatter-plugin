@@ -31,12 +31,6 @@ import com.github.zg2pro.formatter.plugin.scala.ScalaPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -187,8 +181,7 @@ public class ForceFormatMojo extends AbstractMojo {
         getLog().info("executes prettier java");
         prettierHandler.prettify();
         getLog().info("executes prettier scala");
-        //FIXME
-        //scalaHandler.prettify();
+        scalaHandler.prettify();
 
         if (repo != null) {
             getLog().info("executes editorconfig");
