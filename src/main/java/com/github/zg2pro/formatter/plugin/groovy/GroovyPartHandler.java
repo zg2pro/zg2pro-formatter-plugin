@@ -29,6 +29,7 @@ import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.ServerSocket;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
@@ -39,9 +40,12 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.maven.MavenExecutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
@@ -57,9 +61,7 @@ import org.eclipse.aether.resolution.ArtifactResult;
  *
  * @author zg2pro
  */
-public class GroovyPartHandler
-    extends AbstractFormatterService
-    implements Runnable {
+public class GroovyPartHandler extends AbstractFormatterService {
     private PluginDescriptor pluginDescriptor;
     private MavenProject project;
     private RepositorySystemSession repositorySystemSession;
@@ -99,40 +101,23 @@ public class GroovyPartHandler
                 throw new MojoExecutionException("couldnt extract node", ex);
             }
         } else {
+            List<String> installGroovyFormatterCmd = new ArrayList<>();
+            installGroovyFormatterCmd.add(
+                groovyLintExec
+                    .toFile()
+                    .getAbsolutePath()
+                    .replaceAll("\\\\", "/")
+            );
+            installGroovyFormatterCmd.add("--loglevel");
+            installGroovyFormatterCmd.add("error");
+            installGroovyFormatterCmd.add("--noserver");
+            installGroovyFormatterCmd.add("--fix");
+            installGroovyFormatterCmd.add("||true");
             try {
-                FileChannel channel = new RandomAccessFile(
-                    groovyLintExec.toFile(),
-                    "rw"
-                )
-                .getChannel();
-                // Get an exclusive lock on the whole file
-                FileLock lock = channel.lock();
-                try {
-                    lock = channel.tryLock();
-                    // Ok. You get the lock
-                    //cant format the first time as it generates a file lock issue
-                    List<String> installGroovyFormatterCmd = new ArrayList<>();
-                    installGroovyFormatterCmd.add(
-                        groovyLintExec
-                            .toFile()
-                            .getAbsolutePath()
-                            .replaceAll("\\\\", "/")
-                    );
-                    installGroovyFormatterCmd.add("--fix");
-                    installGroovyFormatterCmd.add("||true");
-                    executeCommand(installGroovyFormatterCmd);
-                } catch (OverlappingFileLockException e) {
-                    // File is open by someone else
-                    getLog()
-                        .debug(
-                            "couldnt execute the formatter as the linter app is locked by another process"
-                        );
-                } finally {
-                    lock.release();
-                }
-            } catch (IOException | InterruptedException ex) {
+                executeCommand(installGroovyFormatterCmd);
+            } catch (InterruptedException | IOException ex) {
                 throw new MojoExecutionException(
-                    "could not execute command",
+                    "could not execute npm-groovy-lint",
                     ex
                 );
             }
@@ -196,15 +181,6 @@ public class GroovyPartHandler
             return OperatingSystemFamily.WINDOWS;
         } else {
             throw new MojoExecutionException("Unknown os.name " + osFullName);
-        }
-    }
-
-    @Override
-    public void run() {
-        try {
-            prettify();
-        } catch (MojoExecutionException ex) {
-            throw new IllegalStateException(ex);
         }
     }
 

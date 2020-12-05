@@ -168,6 +168,9 @@ public class ForceFormatMojo extends AbstractMojo {
                 }
                 getLog().debug("pre-commit");
                 hookHandler.overwriteCommitHook();
+
+                getLog().info("executes prettier groovy");
+                groovyHandler.prettify();
             } catch (IOException e) {
                 throw new MojoExecutionException(
                     "could not write the .editorconfig file at root of project",
@@ -181,20 +184,6 @@ public class ForceFormatMojo extends AbstractMojo {
                 );
             editorconfigHandler.cleanEditorconfigsInSubmodules();
         }
-
-        getLog().info("executes prettier groovy");
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future f = executor.submit(groovyHandler);
-        try {
-            f.get(50, TimeUnit.SECONDS);
-            getLog().debug("groovy formatter completed its execution");
-        } catch (TimeoutException e) {
-            getLog().debug("timeout for groovy formatter");
-            f.cancel(true);
-        } catch (InterruptedException | ExecutionException ex) {
-            throw new IllegalStateException(ex);
-        }
-
         getLog().info("executes prettier java");
         prettierHandler.prettify();
         getLog().info("executes prettier scala");

@@ -147,9 +147,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         FILETYPES_ARE_XML.put("application/x-bash", false);
     }
 
-    private boolean isBinaryFile(File f) throws IOException {
+    private boolean isBinaryFile(File f, StringBuilder sbLogs)
+        throws IOException {
         String type = tika.detect(f);
-        getLog().debug("filetype: " + type);
+        sbLogs.append(" | filetype: " + type);
         boolean binary = true;
         if (type != null) {
             if (
@@ -196,17 +197,26 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                 }
             }
         } else {
-            getLog().debug("Found a file '{}'" + f.getPath());
-            if (!ir.isIgnored(f) && !isBinaryFile(f)) {
-                formatWithEditorconfig(f, handler, editorConfigProperties);
+            StringBuilder sbLogs = new StringBuilder(
+                "Found a file: " + f.getPath()
+            );
+            if (!ir.isIgnored(f) && !isBinaryFile(f, sbLogs)) {
+                formatWithEditorconfig(
+                    f,
+                    handler,
+                    editorConfigProperties,
+                    sbLogs
+                );
             }
+            getLog().debug(sbLogs.toString());
         }
     }
 
     private void formatWithEditorconfig(
         File file,
         ViolationHandler handler,
-        ResourceProperties editorConfigProperties
+        ResourceProperties editorConfigProperties,
+        StringBuilder sbLogs
     )
         throws IOException {
         if (!editorConfigProperties.getProperties().isEmpty()) {
@@ -230,14 +240,14 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                 while (state != ViolationHandler.ReturnState.FINISHED) {
                     handler.startFile(resource);
                     if (isXmlFile(resource.getPath().toFile())) {
-                        getLog().debug("linting file as xml");
+                        sbLogs.append(" | linting file as xml");
                         xmlLinter.process(
                             resource,
                             editorConfigProperties,
                             handler
                         );
                     }
-                    getLog().debug("linting file as text");
+                    sbLogs.append(" | linting file as text");
                     textLinter.process(
                         resource,
                         editorConfigProperties,
