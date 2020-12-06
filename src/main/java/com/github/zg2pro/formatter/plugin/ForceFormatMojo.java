@@ -62,6 +62,12 @@ public class ForceFormatMojo extends AbstractMojo {
     )
     private boolean allowModificationsOnEditorconfig;
 
+    @Parameter(
+        defaultValue = "false",
+        property = "zg2pro.format.run.groovy.formatter.in.thread"
+    )
+    private boolean runGroovyFormatterInAutonomousThread;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
@@ -166,7 +172,12 @@ public class ForceFormatMojo extends AbstractMojo {
                 hookHandler.overwriteCommitHook();
 
                 getLog().info("executes prettier groovy");
-                groovyHandler.prettify();
+                if (runGroovyFormatterInAutonomousThread) {
+                    Thread t = new Thread(groovyHandler);
+                    t.start();
+                } else {
+                    groovyHandler.prettify();
+                }
             } catch (IOException e) {
                 throw new MojoExecutionException(
                     "could not write the .editorconfig file at root of project",
