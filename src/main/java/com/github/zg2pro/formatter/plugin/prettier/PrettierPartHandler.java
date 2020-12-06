@@ -42,7 +42,7 @@ import org.apache.maven.project.MavenProject;
  *
  * @author zg2pro
  */
-public class PrettierPartHandler {
+public class PrettierPartHandler implements Runnable {
     private final MavenProject project;
 
     private final MavenSession session;
@@ -70,5 +70,14 @@ public class PrettierPartHandler {
             configuration(),
             executionEnvironment(project, session, pluginManager)
         );
+    }
+
+    @Override
+    public void run() {
+        try {
+            prettify();
+        } catch (MojoExecutionException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 }

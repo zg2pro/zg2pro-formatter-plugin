@@ -35,6 +35,7 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.name;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
 
+import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -45,7 +46,9 @@ import org.twdata.maven.mojoexecutor.MojoExecutor;
  *
  * @author zg2pro
  */
-public class ScalaPartHandler {
+public class ScalaPartHandler
+    extends AbstractFormatterService
+    implements Runnable {
     private final MavenProject project;
 
     private final MavenSession session;
@@ -83,5 +86,14 @@ public class ScalaPartHandler {
             configuration(scalaConfigElement),
             executionEnvironment(project, session, pluginManager)
         );
+    }
+
+    @Override
+    public void run() {
+        try {
+            prettify();
+        } catch (MojoExecutionException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 }

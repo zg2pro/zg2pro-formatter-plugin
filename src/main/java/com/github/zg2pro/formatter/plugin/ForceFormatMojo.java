@@ -31,6 +31,11 @@ import com.github.zg2pro.formatter.plugin.scala.ScalaPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -55,6 +60,12 @@ import org.eclipse.jgit.lib.Repository;
 public class ForceFormatMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", property = "zg2pro.format.skip")
     private boolean skip;
+
+    @Parameter(
+        defaultValue = "false",
+        property = "zg2pro.format.run.formatters.in.threads"
+    )
+    private boolean runFormattersInThreads;
 
     @Parameter(
         defaultValue = "false",
@@ -134,6 +145,10 @@ public class ForceFormatMojo extends AbstractMojo {
             .resolve(".git")
             .toFile()
             .exists();
+        ExecutorService executor = runFormattersInThreads
+            ? executor = Executors.newCachedThreadPool()
+            : null;
+
         try {
             if (runningOnGitRepo) {
                 Git git = Git.open(projectBaseDir);
@@ -162,9 +177,12 @@ public class ForceFormatMojo extends AbstractMojo {
                 }
                 getLog().debug("pre-commit");
                 hookHandler.overwriteCommitHook();
-
                 getLog().info("executes prettier groovy");
-                groovyHandler.prettify();
+                if (runFormattersInThreads) {
+                    executor.execute(groovyHandler);
+                } else {
+                    groovyHandler.prettify();
+                }
             } catch (IOException e) {
                 throw new MojoExecutionException(
                     "could not write the .editorconfig file at root of project",
@@ -179,10 +197,32 @@ public class ForceFormatMojo extends AbstractMojo {
             editorconfigHandler.cleanEditorconfigsInSubmodules();
         }
         getLog().info("executes prettier java");
-        prettierHandler.prettify();
+        if (runFormattersInThreads) {
+            executor.execute(prettierHandler);
+        } else {
+            prettierHandler.prettify();
+        }
         getLog().info("executes prettier scala");
-        scalaHandler.prettify();
-
+        boolean finished = true;
+        if (runFormattersInThreads) {
+            executor.execute(scalaHandler);
+            executor.shutdown();
+            try {
+                finished = executor.awaitTermination(5, TimeUnit.MINUTES);
+            } catch (InterruptedException ex) {
+                throw new MojoExecutionException(
+                    "error with the management of the threads",
+                    ex
+                );
+            }
+        } else {
+            scalaHandler.prettify();
+        }
+        if (!finished) {
+            throw new MojoExecutionException(
+                "This module is taking way too long to format, you should divide it into several submodules"
+            );
+        }
         if (repo != null) {
             getLog().info("executes editorconfig");
             editorconfigHandler.executeEditorConfigOnGitRepo(

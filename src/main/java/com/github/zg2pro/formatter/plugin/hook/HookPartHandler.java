@@ -25,8 +25,6 @@ package com.github.zg2pro.formatter.plugin.hook;
 
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.IOException;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;

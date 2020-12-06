@@ -28,11 +28,6 @@ import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.NODE_
 import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.ServerSocket;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -45,7 +40,6 @@ import java.util.logging.Logger;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.maven.MavenExecutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
@@ -61,7 +55,9 @@ import org.eclipse.aether.resolution.ArtifactResult;
  *
  * @author zg2pro
  */
-public class GroovyPartHandler extends AbstractFormatterService {
+public class GroovyPartHandler
+    extends AbstractFormatterService
+    implements Runnable {
     private PluginDescriptor pluginDescriptor;
     private MavenProject project;
     private RepositorySystemSession repositorySystemSession;
@@ -181,6 +177,15 @@ public class GroovyPartHandler extends AbstractFormatterService {
             return OperatingSystemFamily.WINDOWS;
         } else {
             throw new MojoExecutionException("Unknown os.name " + osFullName);
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            prettify();
+        } catch (MojoExecutionException ex) {
+            throw new IllegalStateException(ex);
         }
     }
 
