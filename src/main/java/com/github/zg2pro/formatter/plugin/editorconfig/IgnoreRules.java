@@ -138,9 +138,19 @@ public class IgnoreRules {
             parseDir = parseDir.getParentFile();
 
             File gitignore = new File(parseDir, ".gitignore");
+            File prettierignore = new File(parseDir, ".prettierignore");
             if (gitignore.exists()) {
                 try (
                     FileInputStream fis = new FileInputStream(gitignore) // ensure that the file gets closed!
+                ) {
+                    if (parseGitIgnore(fis, toCheckFor)) {
+                        return true;
+                    }
+                }
+            }
+            if (prettierignore.exists()) {
+                try (
+                    FileInputStream fis = new FileInputStream(prettierignore) // ensure that the file gets closed!
                 ) {
                     if (parseGitIgnore(fis, toCheckFor)) {
                         return true;

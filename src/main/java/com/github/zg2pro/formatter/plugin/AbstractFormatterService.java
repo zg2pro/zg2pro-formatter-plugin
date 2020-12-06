@@ -33,11 +33,11 @@ import org.apache.maven.plugin.logging.SystemStreamLog;
 public class AbstractFormatterService {
     private Log log;
 
-    protected Log getLog() {
-        if (log == null) {
-            log = new SystemStreamLog();
-        }
+    public AbstractFormatterService(Log log) {
+        this.log = log;
+    }
 
+    protected Log getLog() {
         return log;
     }
 }

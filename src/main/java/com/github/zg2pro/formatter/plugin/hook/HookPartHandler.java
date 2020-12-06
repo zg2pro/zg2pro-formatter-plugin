@@ -23,12 +23,12 @@
  */
 package com.github.zg2pro.formatter.plugin.hook;
 
+import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
 import java.io.IOException;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -37,7 +37,7 @@ import org.eclipse.jgit.lib.StoredConfig;
  *
  * @author zg2pro
  */
-public class HookPartHandler {
+public class HookPartHandler extends AbstractFormatterService {
     private final MavenProject project;
 
     private final FileOverwriter fileOverwriter;
@@ -46,8 +46,10 @@ public class HookPartHandler {
     public HookPartHandler(
         MavenProject project,
         FileOverwriter fileOverwriter,
-        boolean skip
+        boolean skip,
+        Log logger
     ) {
+        super(logger);
         this.project = project;
         this.fileOverwriter = fileOverwriter;
         this.skip = skip;
@@ -66,7 +68,8 @@ public class HookPartHandler {
         } else {
             fileOverwriter.checkFileAndOverwriteIfNeedBe(
                 project.getFile(),
-                hookfilename
+                hookfilename,
+                getLog()
             );
             if (
                 !project

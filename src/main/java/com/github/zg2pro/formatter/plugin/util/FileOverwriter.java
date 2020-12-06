@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Arrays;
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.plugin.logging.Log;
 
 /**
  *
@@ -42,9 +43,14 @@ public class FileOverwriter extends AbstractFormatterService {
         .toLowerCase()
         .contains("win");
 
+    public FileOverwriter(Log log) {
+        super(log);
+    }
+
     public void checkFileAndOverwriteIfNeedBe(
         File projectFile,
-        String filepath
+        String filepath,
+        Log logger
     )
         throws IOException {
         InputStream ecStream =

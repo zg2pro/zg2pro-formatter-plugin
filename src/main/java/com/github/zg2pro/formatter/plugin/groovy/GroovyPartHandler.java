@@ -28,11 +28,6 @@ import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.NODE_
 import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.ServerSocket;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -40,14 +35,12 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.maven.MavenExecutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -71,8 +64,10 @@ public class GroovyPartHandler extends AbstractFormatterService {
         PluginDescriptor pluginDescriptor,
         MavenProject project,
         RepositorySystemSession repositorySystemSession,
-        RepositorySystem repositorySystem
+        RepositorySystem repositorySystem,
+        Log logger
     ) {
+        super(logger);
         this.pluginDescriptor = pluginDescriptor;
         this.project = project;
         this.repositorySystemSession = repositorySystemSession;

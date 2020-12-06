@@ -92,18 +92,20 @@ public class ForceFormatMojo extends AbstractMojo {
     private GroovyPartHandler groovyHandler;
 
     private void initServices() {
-        fileOverwriter = new FileOverwriter();
-        hookHandler = new HookPartHandler(project, fileOverwriter, skip);
+        fileOverwriter = new FileOverwriter(getLog());
+        hookHandler =
+            new HookPartHandler(project, fileOverwriter, skip, getLog());
         prettierHandler =
             new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler =
-            new EditorConfigPartHandler(project, fileOverwriter);
+            new EditorConfigPartHandler(project, fileOverwriter, getLog());
         groovyHandler =
             new GroovyPartHandler(
                 pluginDescriptor,
                 project,
                 repositorySystemSession,
-                repositorySystem
+                repositorySystem,
+                getLog()
             );
         scalaHandler = new ScalaPartHandler(project, session, pluginManager);
     }
@@ -138,7 +140,7 @@ public class ForceFormatMojo extends AbstractMojo {
             if (runningOnGitRepo) {
                 Git git = Git.open(projectBaseDir);
                 repo = git.getRepository();
-                getLog().info("executes git hook placement");
+                getLog().info("executes git hook control");
                 hookHandler.gitHookPluginExecution(repo);
             }
         } catch (IOException ex) {

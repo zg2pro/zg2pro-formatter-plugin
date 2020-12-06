@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.tika.Tika;
 import org.ec4j.core.Cache;
@@ -61,8 +62,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     public EditorConfigPartHandler(
         MavenProject project,
-        FileOverwriter fileOverwriter
+        FileOverwriter fileOverwriter,
+        Log logger
     ) {
+        super(logger);
         this.project = project;
         this.fileOverwriter = fileOverwriter;
     }
@@ -70,7 +73,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     public void overwriteEditorconfig() throws IOException {
         fileOverwriter.checkFileAndOverwriteIfNeedBe(
             project.getFile(),
-            "editorconfig"
+            "editorconfig",
+            getLog()
         );
     }
 
