@@ -39,8 +39,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.jgit.lib.Repository;
 
 /**
@@ -275,15 +273,5 @@ public class IgnoreRules {
         String delimitedPath = filePathToCheckFor + "/";
         boolean equals = delimitedPath.matches(p);
         return equals;
-    }
-
-    private Log log;
-
-    private Log getLog() {
-        if (log == null) {
-            log = new SystemStreamLog();
-        }
-
-        return log;
     }
 }
