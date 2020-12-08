@@ -35,8 +35,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.lang3.ArrayUtils;
@@ -100,6 +98,7 @@ public class GroovyPartHandler
                 throw new MojoExecutionException("couldnt extract node", ex);
             }
         } else {
+            groovyLintExec.toFile().setExecutable(true);
             List<String> installGroovyFormatterCmd = new ArrayList<>();
             installGroovyFormatterCmd.add(
                 groovyLintExec
