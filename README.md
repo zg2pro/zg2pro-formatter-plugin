@@ -48,7 +48,7 @@ Then, last but not least, editorconfig-java runs. It scans all the files which a
 
 When the plugin is inserted in your root pom.xml, you just run once a maven build (minimal phase= validate) and all will be setup.
 
-## Option:
+## Options
 
 You might want to override some of the rules from the .editorconfig file the plugin already downloads for you. In this case:
 Either put a `<allowModificationsOnEditorconfig>true</allowModificationsOnEditorconfig>` tag in config or run your `mvn install` command with `-Dzg2pro.format.allow.modifications.on.editorconfig=true`. When this is done add your file to your git sources.
