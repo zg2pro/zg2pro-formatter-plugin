@@ -30,8 +30,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
@@ -46,6 +48,10 @@ import org.ec4j.lint.api.Linter;
 import org.ec4j.lint.api.ViolationHandler;
 import org.ec4j.linters.TextLinter;
 import org.ec4j.linters.XmlLinter;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +99,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     public void executeEditorConfigOnGitRepo(
         File projectBaseDir,
+        Git git,
         Repository repo
     )
         throws MojoExecutionException {
@@ -121,12 +128,19 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             File currentModuleFolder = project.getFile().getParentFile();
             List<String> subModules = project.getModules();
 
+            Status gitStatus = git.status().call();
+            final Set<String> modified = new HashSet<>(gitStatus.getModified());
+            modified.addAll(gitStatus.getChanged());
             for (File insideModule : currentModuleFolder.listFiles(
-                (File dir, String name) -> !subModules.contains(name)
+                (File dir, String name) -> {
+                    return (
+                        !subModules.contains(name) && modified.contains(name)
+                    );
+                }
             )) {
                 handleFile(insideModule, ir, handler, editorConfigProperties);
             }
-        } catch (IOException ex) {
+        } catch (GitAPIException | NoWorkTreeException | IOException ex) {
             throw new MojoExecutionException(
                 "could not open this folder with jgit",
                 ex
@@ -149,6 +163,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         FILETYPES_ARE_XML.put("application/json", false);
         FILETYPES_ARE_XML.put("application/x-sh", false);
         FILETYPES_ARE_XML.put("application/x-bash", false);
+    }
+
+    private boolean containsModifications(File f) {
+        return true;
     }
 
     private boolean isBinaryFile(File f, StringBuilder sbLogs)
@@ -204,7 +222,11 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             StringBuilder sbLogs = new StringBuilder(
                 "Found a file: " + f.getPath()
             );
-            if (!ir.isIgnored(f) && !isBinaryFile(f, sbLogs)) {
+            if (
+                !ir.isIgnored(f) &&
+                !isBinaryFile(f, sbLogs) &&
+                containsModifications(f)
+            ) {
                 formatWithEditorconfig(
                     f,
                     handler,
