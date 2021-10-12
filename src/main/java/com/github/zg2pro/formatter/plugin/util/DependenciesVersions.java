@@ -28,7 +28,7 @@ package com.github.zg2pro.formatter.plugin.util;
  * @author zg2pro
  */
 public class DependenciesVersions {
-    public static String SPOTLESS_SCALA_MAVEN_PLUGIN_VERSION = "2.6.1";
-    public static String PRETTIER_JAVA_MAVEN_PLUGIN_VERSION = "0.11";
-    public static String NODE_VERSION = "12.13.0";
+    public static String SPOTLESS_SCALA_MAVEN_PLUGIN_VERSION = "2.17.0";
+    public static String PRETTIER_JAVA_MAVEN_PLUGIN_VERSION = "0.14";
+    public static String NODE_VERSION = "14.18.0";
 }

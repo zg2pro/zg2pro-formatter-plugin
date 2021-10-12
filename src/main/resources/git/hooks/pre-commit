@@ -15,7 +15,7 @@ echo running validation and formatting
 before=`git status -v -v`
 echo "format before the commit is stored"
 
-# pattern will always be found with mvn validate, it cant fail even if compilation fails, 
+# pattern will always be found with mvn validate, it cant fail even if compilation fails,
 # this helps waiting for mvn process to be done before going to git diffs
 mvn clean validate | grep -e 'BUILD SUCCESS'
 echo "format re-applied"
