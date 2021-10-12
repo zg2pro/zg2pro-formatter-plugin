@@ -39,12 +39,12 @@ import org.junit.runner.RunWith;
  * @author zg2pro
  */
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({ "3.6.3" })
+@MavenVersions({ "3.8.3" })
 public class ForceFormatIT {
     @Rule
     public final TestResources resources = new TestResources(
-        "D:\\workspace\\test\\",
-        "D:\\workspace\\test2\\"
+        "C:\\workspace\\test\\",
+        "C:\\workspace\\test2\\"
     );
 
     public final MavenRuntime verifier;
@@ -55,8 +55,8 @@ public class ForceFormatIT {
 
     @Test
     public void checkSpringDataExamples() throws Exception {
-        File projectDir = new File("D:\\workspace\\test\\project");
-        File projectDirTransformed = new File("D:\\workspace\\test2\\project");
+        File projectDir = new File("C:\\workspace\\test\\project");
+        File projectDirTransformed = new File("C:\\workspace\\test2\\project");
         if (projectDirTransformed.exists()) {
             FileUtils.cleanDirectory(projectDirTransformed);
             projectDirTransformed.delete();
@@ -64,7 +64,6 @@ public class ForceFormatIT {
 
         verifier
             .forProject(projectDir) //
-            .withCliOption("-X") // debug
             .withCliOption("-B")
             .execute("clean", "compile")
             .assertErrorFreeLog();

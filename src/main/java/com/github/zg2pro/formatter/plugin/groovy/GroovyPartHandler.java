@@ -23,227 +23,65 @@
  */
 package com.github.zg2pro.formatter.plugin.groovy;
 
-import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.NODE_VERSION;
+import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.SPOTLESS_SCALA_MAVEN_PLUGIN_VERSION;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.executionEnvironment;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.goal;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.groupId;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.name;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
 
-import com.github.zg2pro.formatter.plugin.AbstractFormatterService;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 /**
  *
  * @author zg2pro
  */
-public class GroovyPartHandler
-    extends AbstractFormatterService
-    implements Runnable {
-    private PluginDescriptor pluginDescriptor;
-    private MavenProject project;
-    private RepositorySystemSession repositorySystemSession;
-    private RepositorySystem repositorySystem;
+public class GroovyPartHandler {
+    private final MavenProject project;
+
+    private final MavenSession session;
+
+    private final BuildPluginManager pluginManager;
 
     public GroovyPartHandler(
-        PluginDescriptor pluginDescriptor,
         MavenProject project,
-        RepositorySystemSession repositorySystemSession,
-        RepositorySystem repositorySystem,
-        Log logger
+        MavenSession session,
+        BuildPluginManager pluginManager
     ) {
-        super(logger);
-        this.pluginDescriptor = pluginDescriptor;
         this.project = project;
-        this.repositorySystemSession = repositorySystemSession;
-        this.repositorySystem = repositorySystem;
+        this.session = session;
+        this.pluginManager = pluginManager;
     }
 
-    public void prettify() throws MojoExecutionException {
-        File nodeExecutable = resolveNodeExecutable().toFile();
-
-        String groovyLintExecutable = OperatingSystemFamily.WINDOWS.equals(
-                determineOperatingSystemFamily()
-            )
-            ? "npm-groovy-lint.cmd"
-            : "npm-groovy-lint";
-        Path groovyLintExec = nodeExecutable
-            .toPath()
-            .getParent()
-            .resolve("node")
-            .resolve(groovyLintExecutable);
-
-        if (!groovyLintExec.toFile().exists()) {
-            ZipFile zf = new ZipFile(nodeExecutable);
-            try {
-                zf.extractAll(nodeExecutable.getParent());
-            } catch (ZipException ex) {
-                throw new MojoExecutionException("couldnt extract node", ex);
-            }
-        } else {
-            groovyLintExec.toFile().setExecutable(true);
-            List<String> installGroovyFormatterCmd = new ArrayList<>();
-            installGroovyFormatterCmd.add(
-                groovyLintExec
-                    .toFile()
-                    .getAbsolutePath()
-                    .replaceAll("\\\\", "/")
-            );
-            installGroovyFormatterCmd.add("--loglevel");
-            installGroovyFormatterCmd.add("error");
-            installGroovyFormatterCmd.add("--noserver");
-            installGroovyFormatterCmd.add("--fix");
-            installGroovyFormatterCmd.add("||true");
-            try {
-                executeCommand(installGroovyFormatterCmd);
-            } catch (InterruptedException | IOException ex) {
-                throw new MojoExecutionException(
-                    "could not execute npm-groovy-lint",
-                    ex
-                );
-            }
-        }
-    }
-
-    private void executeCommand(List<String> command)
-        throws InterruptedException, IOException {
-        System.out.println(ArrayUtils.toString(command.toArray()));
-        ProcessBuilder pb = new ProcessBuilder(command);
-        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-        Process process = pb.start();
-        process.waitFor();
-        if (process.isAlive()) {
-            process.destroy();
-        }
-    }
-
-    protected Path resolveNodeExecutable() throws MojoExecutionException {
-        Artifact nodeArtifact = new DefaultArtifact(
-            pluginDescriptor.getGroupId(),
-            pluginDescriptor.getArtifactId(),
-            "node-12.16",
-            "zip",
-            pluginDescriptor.getVersion()
-        );
-
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Resolving node artifact " + nodeArtifact);
-        }
-
-        File nodeExecutable = resolve(nodeArtifact).getFile();
-        if (!nodeExecutable.setExecutable(true, false)) {
-            throw new MojoExecutionException(
-                "Unable to make file executable " + nodeExecutable
-            );
-        }
-
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Resolved node artifact to " + nodeExecutable);
-        }
-
-        return nodeExecutable.toPath();
-    }
-
-    private OperatingSystemFamily determineOperatingSystemFamily()
-        throws MojoExecutionException {
-        String osFullName = System.getProperty("os.name");
-        if (osFullName == null) {
-            throw new MojoExecutionException("No os.name system property set");
-        } else {
-            osFullName = osFullName.toLowerCase();
-        }
-
-        if (osFullName.startsWith("linux")) {
-            return OperatingSystemFamily.LINUX;
-        } else if (osFullName.startsWith("mac os x")) {
-            return OperatingSystemFamily.MAC_OS_X;
-        } else if (osFullName.startsWith("windows")) {
-            return OperatingSystemFamily.WINDOWS;
-        } else {
-            throw new MojoExecutionException("Unknown os.name " + osFullName);
-        }
-    }
-
-    @Override
-    public void run() {
-        try {
-            prettify();
-        } catch (MojoExecutionException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    private enum OperatingSystemFamily {
-        LINUX("linux"),
-        MAC_OS_X("mac_os_x"),
-        WINDOWS("windows");
-
-        private String shortName;
-
-        OperatingSystemFamily(String shortName) {
-            this.shortName = shortName;
-        }
-
-        public String getShortName() {
-            return shortName;
-        }
-
-        public FileAttribute<?>[] getGlobalPermissions() {
-            if (this == WINDOWS) {
-                return new FileAttribute<?>[0];
-            } else {
-                return new FileAttribute<?>[] {
-                    PosixFilePermissions.asFileAttribute(GLOBAL_PERMISSIONS)
-                };
-            }
-        }
-    }
-
-    private static final Set<PosixFilePermission> GLOBAL_PERMISSIONS = PosixFilePermissions.fromString(
-        "rwxrwxrwx"
+    private static final MojoExecutor.Element groovyConfigElement = element(
+        name("groovy"),
+        element(name("greclipse"), ""),
+        element(
+            name("includes"),
+            element(name("include"), "**/*.groovy"),
+            element(name("include"), "**/Jenkinsfile")
+        )
     );
 
-    private Artifact resolve(Artifact artifact) throws MojoExecutionException {
-        ArtifactRequest artifactRequest = new ArtifactRequest()
-            .setArtifact(artifact)
-            .setRepositories(project.getRemoteProjectRepositories());
-
-        final ArtifactResult result;
-        try {
-            synchronized (RESOLUTION_LOCK) {
-                result =
-                    repositorySystem.resolveArtifact(
-                        repositorySystemSession,
-                        artifactRequest
-                    );
-            }
-        } catch (ArtifactResolutionException e) {
-            throw new MojoExecutionException(
-                "Error resolving artifact " + NODE_VERSION,
-                e
-            );
-        }
-
-        return result.getArtifact();
+    public void prettify() throws MojoExecutionException {
+        executeMojo(
+            plugin(
+                groupId("com.diffplug.spotless"),
+                artifactId("spotless-maven-plugin"),
+                version(SPOTLESS_SCALA_MAVEN_PLUGIN_VERSION)
+            ),
+            goal("apply"),
+            configuration(groovyConfigElement),
+            executionEnvironment(project, session, pluginManager)
+        );
     }
-
-    private static final Object RESOLUTION_LOCK = new Object();
 }

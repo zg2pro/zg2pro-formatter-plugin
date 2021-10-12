@@ -44,7 +44,7 @@ import org.junit.runner.RunWith;
  * @author zg2pro
  */
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({ "3.6.3" })
+@MavenVersions({ "3.8.3" })
 public class ForceFormatTest {
     @Rule
     public final TestResources resources = new TestResources(
