@@ -32,6 +32,7 @@ import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -106,12 +107,31 @@ public class ForceFormatTest {
             .call();
 
         File projDir = resources.getBasedir(projectName);
+        Properties props = new Properties();
+
+        props.load(
+            ForceFormatTest.class.getClassLoader()
+                .getResourceAsStream("test.properties")
+        );
+        String projectVersion = String.class.cast(props.get("project.version"));
+
+        System.out.println(
+            "Testing now project: " +
+            projectName +
+            " with plugin v" +
+            projectVersion
+        );
 
         verifier
             .forProject(projDir) //
-            .withCliOption("-X") // debug
+            // .withCliOption("-X") // debug
             .withCliOption("-B")
-            .execute("clean", "compile")
+            .execute(
+                "clean",
+                "com.github.zg2pro.formatter:zg2pro-formatter-plugin:" +
+                projectVersion +
+                ":apply"
+            )
             .assertErrorFreeLog();
     }
 }

@@ -30,8 +30,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
@@ -46,6 +48,10 @@ import org.ec4j.lint.api.Linter;
 import org.ec4j.lint.api.ViolationHandler;
 import org.ec4j.linters.TextLinter;
 import org.ec4j.linters.XmlLinter;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.LoggerFactory;
 
@@ -59,15 +65,19 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
     private final Tika tika = new Tika();
+    private boolean applyEditorconfigOnlyWhenModified;
 
     public EditorConfigPartHandler(
         MavenProject project,
         FileOverwriter fileOverwriter,
+        boolean applyEditorconfigOnlyWhenModified,
         Log logger
     ) {
         super(logger);
         this.project = project;
         this.fileOverwriter = fileOverwriter;
+        this.applyEditorconfigOnlyWhenModified =
+            applyEditorconfigOnlyWhenModified;
     }
 
     public void overwriteEditorconfig() throws IOException {
@@ -93,6 +103,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     public void executeEditorConfigOnGitRepo(
         File projectBaseDir,
+        Git git,
         Repository repo
     )
         throws MojoExecutionException {
@@ -121,12 +132,21 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             File currentModuleFolder = project.getFile().getParentFile();
             List<String> subModules = project.getModules();
 
+            Status gitStatus = git.status().call();
+            final Set<String> modified = new HashSet<>(gitStatus.getModified());
+            modified.addAll(gitStatus.getChanged());
             for (File insideModule : currentModuleFolder.listFiles(
                 (File dir, String name) -> !subModules.contains(name)
             )) {
-                handleFile(insideModule, ir, handler, editorConfigProperties);
+                handleFile(
+                    insideModule,
+                    ir,
+                    handler,
+                    editorConfigProperties,
+                    modified
+                );
             }
-        } catch (IOException ex) {
+        } catch (GitAPIException | NoWorkTreeException | IOException ex) {
             throw new MojoExecutionException(
                 "could not open this folder with jgit",
                 ex
@@ -149,6 +169,20 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         FILETYPES_ARE_XML.put("application/json", false);
         FILETYPES_ARE_XML.put("application/x-sh", false);
         FILETYPES_ARE_XML.put("application/x-bash", false);
+    }
+
+    private boolean containsModifications(File f, Set<String> modifiedFiles) {
+        return modifiedFiles
+            .stream()
+            .anyMatch(
+                modifiedFile ->
+                    (
+                        f
+                            .getAbsolutePath()
+                            .replaceAll("\\\\", "/")
+                            .contains(modifiedFile)
+                    )
+            );
     }
 
     private boolean isBinaryFile(File f, StringBuilder sbLogs)
@@ -186,7 +220,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         File f,
         IgnoreRules ir,
         ViolationHandler handler,
-        ResourceProperties editorConfigProperties
+        ResourceProperties editorConfigProperties,
+        Set<String> modifiedFiles
     )
         throws IOException {
         if (f.isDirectory()) {
@@ -196,7 +231,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                         insideFolder,
                         ir,
                         handler,
-                        editorConfigProperties
+                        editorConfigProperties,
+                        modifiedFiles
                     );
                 }
             }
@@ -204,7 +240,14 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             StringBuilder sbLogs = new StringBuilder(
                 "Found a file: " + f.getPath()
             );
-            if (!ir.isIgnored(f) && !isBinaryFile(f, sbLogs)) {
+            if (
+                !ir.isIgnored(f) &&
+                !isBinaryFile(f, sbLogs) &&
+                (
+                    !applyEditorconfigOnlyWhenModified ||
+                    containsModifications(f, modifiedFiles)
+                )
+            ) {
                 formatWithEditorconfig(
                     f,
                     handler,

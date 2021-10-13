@@ -89,7 +89,10 @@ public class FileOverwriter extends AbstractFormatterService {
             )
         ) {
             getLog().info("overwrites " + filepath);
+            System.out.println("11111:" + couldBeExistingFile);
+            System.out.println("aaaaa:" + content);
             FileUtils.writeStringToFile(couldBeExistingFile, content, "UTF-8");
+            System.out.println("222222");
         }
     }
 }

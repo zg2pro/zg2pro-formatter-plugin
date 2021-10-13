@@ -37,14 +37,11 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 
@@ -62,6 +59,12 @@ public class ForceFormatMojo extends AbstractMojo {
     )
     private boolean allowModificationsOnEditorconfig;
 
+    @Parameter(
+        defaultValue = "false",
+        property = "zg2pro.format.apply.editorconfig.only.when.modified"
+    )
+    private boolean applyEditorconfigOnlyWhenModified;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
@@ -70,19 +73,6 @@ public class ForceFormatMojo extends AbstractMojo {
 
     @Component
     public BuildPluginManager pluginManager;
-
-    @Parameter(
-        defaultValue = "${repositorySystemSession}",
-        required = true,
-        readonly = true
-    )
-    private RepositorySystemSession repositorySystemSession;
-
-    @Component
-    private PluginDescriptor pluginDescriptor;
-
-    @Component
-    private RepositorySystem repositorySystem;
 
     private HookPartHandler hookHandler;
     private PrettierPartHandler prettierHandler;
@@ -98,7 +88,12 @@ public class ForceFormatMojo extends AbstractMojo {
         prettierHandler =
             new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler =
-            new EditorConfigPartHandler(project, fileOverwriter, getLog());
+            new EditorConfigPartHandler(
+                project,
+                fileOverwriter,
+                applyEditorconfigOnlyWhenModified,
+                getLog()
+            );
         groovyHandler = new GroovyPartHandler(project, session, pluginManager);
         scalaHandler = new ScalaPartHandler(project, session, pluginManager);
     }
@@ -123,6 +118,7 @@ public class ForceFormatMojo extends AbstractMojo {
         getLog().debug("rootDirectoryPom:" + rootDirectoryPom);
         String currentModulePom = project.getFile().toString();
         getLog().debug("currentModulePom:" + currentModulePom);
+        Git git = null;
         Repository repo = null;
         boolean runningOnGitRepo = projectBaseDir
             .toPath()
@@ -131,7 +127,7 @@ public class ForceFormatMojo extends AbstractMojo {
             .exists();
         try {
             if (runningOnGitRepo) {
-                Git git = Git.open(projectBaseDir);
+                git = Git.open(projectBaseDir);
                 repo = git.getRepository();
                 getLog().info("executes git hook control");
                 hookHandler.gitHookPluginExecution(repo);
@@ -182,6 +178,7 @@ public class ForceFormatMojo extends AbstractMojo {
             getLog().info("executes editorconfig");
             editorconfigHandler.executeEditorConfigOnGitRepo(
                 projectBaseDir,
+                git,
                 repo
             );
         }
