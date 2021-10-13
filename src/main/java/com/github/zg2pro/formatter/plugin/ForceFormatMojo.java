@@ -59,6 +59,12 @@ public class ForceFormatMojo extends AbstractMojo {
     )
     private boolean allowModificationsOnEditorconfig;
 
+    @Parameter(
+        defaultValue = "false",
+        property = "zg2pro.format.apply.editorconfig.only.when.modified"
+    )
+    private boolean applyEditorconfigOnlyWhenModified;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
@@ -82,7 +88,12 @@ public class ForceFormatMojo extends AbstractMojo {
         prettierHandler =
             new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler =
-            new EditorConfigPartHandler(project, fileOverwriter, getLog());
+            new EditorConfigPartHandler(
+                project,
+                fileOverwriter,
+                applyEditorconfigOnlyWhenModified,
+                getLog()
+            );
         groovyHandler = new GroovyPartHandler(project, session, pluginManager);
         scalaHandler = new ScalaPartHandler(project, session, pluginManager);
     }

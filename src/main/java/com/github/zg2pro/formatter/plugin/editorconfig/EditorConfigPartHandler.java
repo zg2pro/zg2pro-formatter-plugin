@@ -65,15 +65,19 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
     private final Linter textLinter = new TextLinter();
     private final Linter xmlLinter = new XmlLinter();
     private final Tika tika = new Tika();
+    private boolean applyEditorconfigOnlyWhenModified;
 
     public EditorConfigPartHandler(
         MavenProject project,
         FileOverwriter fileOverwriter,
+        boolean applyEditorconfigOnlyWhenModified,
         Log logger
     ) {
         super(logger);
         this.project = project;
         this.fileOverwriter = fileOverwriter;
+        this.applyEditorconfigOnlyWhenModified =
+            applyEditorconfigOnlyWhenModified;
     }
 
     public void overwriteEditorconfig() throws IOException {
@@ -132,13 +136,15 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             final Set<String> modified = new HashSet<>(gitStatus.getModified());
             modified.addAll(gitStatus.getChanged());
             for (File insideModule : currentModuleFolder.listFiles(
-                (File dir, String name) -> {
-                    return (
-                        !subModules.contains(name) && modified.contains(name)
-                    );
-                }
+                (File dir, String name) -> !subModules.contains(name)
             )) {
-                handleFile(insideModule, ir, handler, editorConfigProperties);
+                handleFile(
+                    insideModule,
+                    ir,
+                    handler,
+                    editorConfigProperties,
+                    modified
+                );
             }
         } catch (GitAPIException | NoWorkTreeException | IOException ex) {
             throw new MojoExecutionException(
@@ -165,8 +171,18 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         FILETYPES_ARE_XML.put("application/x-bash", false);
     }
 
-    private boolean containsModifications(File f) {
-        return true;
+    private boolean containsModifications(File f, Set<String> modifiedFiles) {
+        return modifiedFiles
+            .stream()
+            .anyMatch(
+                modifiedFile ->
+                    (
+                        f
+                            .getAbsolutePath()
+                            .replaceAll("\\\\", "/")
+                            .contains(modifiedFile)
+                    )
+            );
     }
 
     private boolean isBinaryFile(File f, StringBuilder sbLogs)
@@ -204,7 +220,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
         File f,
         IgnoreRules ir,
         ViolationHandler handler,
-        ResourceProperties editorConfigProperties
+        ResourceProperties editorConfigProperties,
+        Set<String> modifiedFiles
     )
         throws IOException {
         if (f.isDirectory()) {
@@ -214,7 +231,8 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
                         insideFolder,
                         ir,
                         handler,
-                        editorConfigProperties
+                        editorConfigProperties,
+                        modifiedFiles
                     );
                 }
             }
@@ -225,7 +243,10 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
             if (
                 !ir.isIgnored(f) &&
                 !isBinaryFile(f, sbLogs) &&
-                containsModifications(f)
+                (
+                    !applyEditorconfigOnlyWhenModified ||
+                    containsModifications(f, modifiedFiles)
+                )
             ) {
                 formatWithEditorconfig(
                     f,

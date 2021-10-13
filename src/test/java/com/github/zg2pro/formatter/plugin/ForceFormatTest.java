@@ -72,10 +72,10 @@ public class ForceFormatTest {
         testPluginByGithubZg2proProject("snail", "master");
     }
 
-    @Test
-    public void checkSpringDataExamples() throws Exception {
-        testPluginByGithubZg2proProject("spring-data-examples", "master");
-    }
+    //    @Test
+    //    public void checkSpringDataExamples() throws Exception {
+    //        testPluginByGithubZg2proProject("spring-data-examples", "master");
+    //    }
 
     private void testPluginByGithubZg2proProject(
         String projectName,
@@ -109,9 +109,13 @@ public class ForceFormatTest {
 
         verifier
             .forProject(projDir) //
-            .withCliOption("-X") // debug
+            // .withCliOption("-X") // debug
             .withCliOption("-B")
-            .execute("clean", "compile")
+            .execute(
+                "clean",
+                "validate",
+                "com.github.zg2pro.formatter:zg2pro-formatter-plugin:0.10-SNAPSHOT:apply"
+            )
             .assertErrorFreeLog();
     }
 }
