@@ -1,5 +1,5 @@
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/zg2pro/zg2pro-formatter-plugin)
-[![Build](https://travis-ci.com/zg2pro/zg2pro-formatter-plugin.svg?branch=master)](https://travis-ci.com/zg2pro/zg2pro-formatter-plugin)
+[![Build](https://github.com/zg2pro/zg2pro-formatter-plugin/actions/workflows/linux.yml)]
 [![BCH compliance](https://bettercodehub.com/edge/badge/zg2pro/zg2pro-formatter-plugin?branch=master)](https://bettercodehub.com/)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.zg2pro.formatter/zg2pro-formatter-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.zg2pro.formatter/zg2pro-formatter-plugin)
 
