@@ -5,7 +5,7 @@ os:
   - windows
 env:
   global:
-    - GRAVIS_REPO="https://github.com/DanySK/Gravis-CI.git"
+    - GRAVIS_REPO="https://github.com/zg2pro/Gravis-CI.git"
     - GRAVIS="$HOME/gravis"
   matrix:
     - JDK="adopt@1.13.0-2"
