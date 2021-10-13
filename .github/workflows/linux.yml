@@ -1,0 +1,7 @@
+name: Linux build
+on: [push]
+jobs:
+  linux-build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: mvn clean install
