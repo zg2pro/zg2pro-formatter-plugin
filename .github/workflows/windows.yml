@@ -1,7 +1,7 @@
-name: Linux build
+name: Windows build
 on: [push]
 jobs:
-  linux-build:
+  windows-build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
