@@ -32,6 +32,7 @@ import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -72,10 +73,10 @@ public class ForceFormatTest {
         testPluginByGithubZg2proProject("snail", "master");
     }
 
-    //    @Test
-    //    public void checkSpringDataExamples() throws Exception {
-    //        testPluginByGithubZg2proProject("spring-data-examples", "master");
-    //    }
+    @Test
+    public void checkSpringDataExamples() throws Exception {
+        testPluginByGithubZg2proProject("spring-data-examples", "master");
+    }
 
     private void testPluginByGithubZg2proProject(
         String projectName,
@@ -106,6 +107,20 @@ public class ForceFormatTest {
             .call();
 
         File projDir = resources.getBasedir(projectName);
+        Properties props = new Properties();
+
+        props.load(
+            ForceFormatTest.class.getClassLoader()
+                .getResourceAsStream("test.properties")
+        );
+        String projectVersion = String.class.cast(props.get("project.version"));
+
+        System.out.println(
+            "Testing now project: " +
+            projectName +
+            " with plugin v" +
+            projectVersion
+        );
 
         verifier
             .forProject(projDir) //
@@ -113,8 +128,9 @@ public class ForceFormatTest {
             .withCliOption("-B")
             .execute(
                 "clean",
-                "validate",
-                "com.github.zg2pro.formatter:zg2pro-formatter-plugin:0.10-SNAPSHOT:apply"
+                "com.github.zg2pro.formatter:zg2pro-formatter-plugin:" +
+                projectVersion +
+                ":apply"
             )
             .assertErrorFreeLog();
     }
