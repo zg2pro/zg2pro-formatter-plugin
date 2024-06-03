@@ -25,7 +25,6 @@ package com.github.zg2pro.formatter.plugin;
 
 import com.github.zg2pro.formatter.plugin.editorconfig.EditorConfigPartHandler;
 import com.github.zg2pro.formatter.plugin.groovy.GroovyPartHandler;
-import com.github.zg2pro.formatter.plugin.hook.HookPartHandler;
 import com.github.zg2pro.formatter.plugin.prettier.PrettierPartHandler;
 import com.github.zg2pro.formatter.plugin.scala.ScalaPartHandler;
 import com.github.zg2pro.formatter.plugin.util.FileOverwriter;
@@ -74,7 +73,6 @@ public class ForceFormatMojo extends AbstractMojo {
     @Component
     public BuildPluginManager pluginManager;
 
-    private HookPartHandler hookHandler;
     private PrettierPartHandler prettierHandler;
     private ScalaPartHandler scalaHandler;
     private EditorConfigPartHandler editorconfigHandler;
@@ -83,8 +81,6 @@ public class ForceFormatMojo extends AbstractMojo {
 
     private void initServices() {
         fileOverwriter = new FileOverwriter(getLog());
-        hookHandler =
-            new HookPartHandler(project, fileOverwriter, skip, getLog());
         prettierHandler =
             new PrettierPartHandler(project, session, pluginManager);
         editorconfigHandler =
@@ -125,19 +121,6 @@ public class ForceFormatMojo extends AbstractMojo {
             .resolve(".git")
             .toFile()
             .exists();
-        try {
-            if (runningOnGitRepo) {
-                git = Git.open(projectBaseDir);
-                repo = git.getRepository();
-                getLog().info("executes git hook control");
-                hookHandler.gitHookPluginExecution(repo);
-            }
-        } catch (IOException ex) {
-            throw new MojoExecutionException(
-                "could not open this folder with jgit",
-                ex
-            );
-        }
         if (handleSkipOption()) {
             return;
         }
@@ -151,8 +134,6 @@ public class ForceFormatMojo extends AbstractMojo {
                     getLog().debug("editorconfig");
                     editorconfigHandler.overwriteEditorconfig();
                 }
-                getLog().debug("pre-commit");
-                hookHandler.overwriteCommitHook();
 
                 getLog().info("executes prettier groovy");
                 groovyHandler.prettify();
