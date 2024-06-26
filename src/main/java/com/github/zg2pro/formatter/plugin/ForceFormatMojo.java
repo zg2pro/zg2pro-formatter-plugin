@@ -159,9 +159,10 @@ public class ForceFormatMojo extends AbstractMojo {
                     getLog().debug("editorconfig");
                     editorconfigHandler.overwriteEditorconfig();
                 }
-                getLog().debug("pre-commit");
-                hookHandler.overwriteCommitHook();
-
+                if (installGitHook) {
+                    getLog().debug("pre-commit");
+                    hookHandler.overwriteCommitHook();
+                }
                 getLog().info("executes prettier groovy");
                 groovyHandler.prettify();
             } catch (IOException e) {
