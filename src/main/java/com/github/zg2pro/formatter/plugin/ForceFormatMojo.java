@@ -54,6 +54,12 @@ public class ForceFormatMojo extends AbstractMojo {
     private boolean skip;
 
     @Parameter(
+        defaultValue = "true",
+        property = "zg2pro.format.install.git.hook"
+    )
+    private boolean installGitHook;
+
+    @Parameter(
         defaultValue = "false",
         property = "zg2pro.format.allow.modifications.on.editorconfig"
     )
@@ -129,8 +135,10 @@ public class ForceFormatMojo extends AbstractMojo {
             if (runningOnGitRepo) {
                 git = Git.open(projectBaseDir);
                 repo = git.getRepository();
-                getLog().info("executes git hook control");
-                hookHandler.gitHookPluginExecution(repo);
+                if (installGitHook) {
+                    getLog().info("executes git hook control");
+                    hookHandler.gitHookPluginExecution(repo);
+                }
             }
         } catch (IOException ex) {
             throw new MojoExecutionException(
