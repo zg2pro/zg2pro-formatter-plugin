@@ -158,7 +158,14 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     static {
         FILETYPES_ARE_XML.put("text", false);
-        for (String xmls : new String[] { "xml", "xsl", "html", "xhtml" }) {
+        for (String xmls : new String[] {
+            "xml",
+            "xsl",
+            "html",
+            "xhtml"/*,
+            "x-yaml",
+            "yaml"*/
+        }) {
             FILETYPES_ARE_XML.put("application/" + xmls, true);
             FILETYPES_ARE_XML.put("text/" + xmls, true);
         }
@@ -205,6 +212,7 @@ public class EditorConfigPartHandler extends AbstractFormatterService {
 
     private boolean isXmlFile(File f) throws IOException {
         String type = tika.detect(f);
+
         boolean isXml = false;
         if (type != null) {
             for (Map.Entry<String, Boolean> accepted : FILETYPES_ARE_XML.entrySet()) {

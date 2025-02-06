@@ -71,6 +71,18 @@ public class ForceFormatMojo extends AbstractMojo {
     )
     private boolean applyEditorconfigOnlyWhenModified;
 
+    @Parameter(
+        defaultValue = "0.22",
+        property = "zg2pro.format.prettier.java.version"
+    )
+    private String prettierJavaVersion;
+
+    @Parameter(
+        defaultValue = "2.30.0",
+        property = "zg2pro.format.spotless.scala.version"
+    )
+    private String spotlessScalaVersion;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
@@ -92,7 +104,12 @@ public class ForceFormatMojo extends AbstractMojo {
         hookHandler =
             new HookPartHandler(project, fileOverwriter, skip, getLog());
         prettierHandler =
-            new PrettierPartHandler(project, session, pluginManager);
+            new PrettierPartHandler(
+                project,
+                session,
+                pluginManager,
+                prettierJavaVersion
+            );
         editorconfigHandler =
             new EditorConfigPartHandler(
                 project,
@@ -100,8 +117,20 @@ public class ForceFormatMojo extends AbstractMojo {
                 applyEditorconfigOnlyWhenModified,
                 getLog()
             );
-        groovyHandler = new GroovyPartHandler(project, session, pluginManager);
-        scalaHandler = new ScalaPartHandler(project, session, pluginManager);
+        groovyHandler =
+            new GroovyPartHandler(
+                project,
+                session,
+                pluginManager,
+                spotlessScalaVersion
+            );
+        scalaHandler =
+            new ScalaPartHandler(
+                project,
+                session,
+                pluginManager,
+                spotlessScalaVersion
+            );
     }
 
     private boolean handleSkipOption() throws MojoExecutionException {
