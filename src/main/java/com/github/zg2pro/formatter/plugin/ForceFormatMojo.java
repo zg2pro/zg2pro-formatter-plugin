@@ -78,6 +78,12 @@ public class ForceFormatMojo extends AbstractMojo {
     private String prettierJavaVersion;
 
     @Parameter(
+        defaultValue = "2.0.0",
+        property = "zg2pro.format.node.prettier.java.version"
+    )
+    private String nodePrettierJavaVersion;
+
+    @Parameter(
         defaultValue = "2.30.0",
         property = "zg2pro.format.spotless.scala.version"
     )
@@ -108,7 +114,8 @@ public class ForceFormatMojo extends AbstractMojo {
                 project,
                 session,
                 pluginManager,
-                prettierJavaVersion
+                prettierJavaVersion,
+                nodePrettierJavaVersion
             );
         editorconfigHandler =
             new EditorConfigPartHandler(
