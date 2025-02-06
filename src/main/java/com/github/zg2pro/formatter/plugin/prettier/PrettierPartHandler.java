@@ -25,10 +25,12 @@ package com.github.zg2pro.formatter.plugin.prettier;
 
 import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executionEnvironment;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.goal;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.groupId;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.name;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
 
@@ -36,6 +38,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /**
  *
@@ -50,19 +53,27 @@ public class PrettierPartHandler {
 
     private final String javaPrettierVersion;
 
+    private final String nodePrettierJavaVersion;
+
     public PrettierPartHandler(
         MavenProject project,
         MavenSession session,
         BuildPluginManager pluginManager,
-        String javaPrettierVersion
+        String javaPrettierVersion,
+        String nodePrettierJavaVersion
     ) {
         this.project = project;
         this.session = session;
         this.pluginManager = pluginManager;
         this.javaPrettierVersion = javaPrettierVersion;
+        this.nodePrettierJavaVersion = nodePrettierJavaVersion;
     }
 
     public void prettify() throws MojoExecutionException {
+        Xpp3Dom configBlock = "default".equals(nodePrettierJavaVersion)
+            ? configuration()
+            : configuration(element(name("prettierJavaVersion"), "2.0.0"));
+
         executeMojo(
             plugin(
                 groupId("com.hubspot.maven.plugins"),
@@ -70,7 +81,7 @@ public class PrettierPartHandler {
                 version(javaPrettierVersion)
             ),
             goal("write"),
-            configuration(),
+            configBlock,
             executionEnvironment(project, session, pluginManager)
         );
     }
