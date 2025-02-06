@@ -23,7 +23,6 @@
  */
 package com.github.zg2pro.formatter.plugin.groovy;
 
-import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.SPOTLESS_SCALA_MAVEN_PLUGIN_VERSION;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
@@ -52,14 +51,18 @@ public class GroovyPartHandler {
 
     private final BuildPluginManager pluginManager;
 
+    private final String spotlessVersion;
+
     public GroovyPartHandler(
         MavenProject project,
         MavenSession session,
-        BuildPluginManager pluginManager
+        BuildPluginManager pluginManager,
+        String spotlessVersion
     ) {
         this.project = project;
         this.session = session;
         this.pluginManager = pluginManager;
+        this.spotlessVersion = spotlessVersion;
     }
 
     private static final MojoExecutor.Element groovyConfigElement = element(
@@ -77,7 +80,7 @@ public class GroovyPartHandler {
             plugin(
                 groupId("com.diffplug.spotless"),
                 artifactId("spotless-maven-plugin"),
-                version(SPOTLESS_SCALA_MAVEN_PLUGIN_VERSION)
+                version(spotlessVersion)
             ),
             goal("apply"),
             configuration(groovyConfigElement),

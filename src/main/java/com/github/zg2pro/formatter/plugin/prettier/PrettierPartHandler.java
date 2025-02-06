@@ -23,7 +23,6 @@
  */
 package com.github.zg2pro.formatter.plugin.prettier;
 
-import static com.github.zg2pro.formatter.plugin.util.DependenciesVersions.PRETTIER_JAVA_MAVEN_PLUGIN_VERSION;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
@@ -49,14 +48,18 @@ public class PrettierPartHandler {
 
     private final BuildPluginManager pluginManager;
 
+    private final String javaPrettierVersion;
+
     public PrettierPartHandler(
         MavenProject project,
         MavenSession session,
-        BuildPluginManager pluginManager
+        BuildPluginManager pluginManager,
+        String javaPrettierVersion
     ) {
         this.project = project;
         this.session = session;
         this.pluginManager = pluginManager;
+        this.javaPrettierVersion = javaPrettierVersion;
     }
 
     public void prettify() throws MojoExecutionException {
@@ -64,7 +67,7 @@ public class PrettierPartHandler {
             plugin(
                 groupId("com.hubspot.maven.plugins"),
                 artifactId("prettier-maven-plugin"),
-                version(PRETTIER_JAVA_MAVEN_PLUGIN_VERSION)
+                version(javaPrettierVersion)
             ),
             goal("write"),
             configuration(),
